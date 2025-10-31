@@ -1,0 +1,6 @@
+Top prediction: Athene cunicularia (Burrowing Owl) (99.88%)
+
+Top 3 predictions:
+1. Athene cunicularia (Burrowing Owl): 99.88%
+2. Haemorhous mexicanus (House Finch): 0.09%
+3. Tyto alba (Barn Owl): 0.03%

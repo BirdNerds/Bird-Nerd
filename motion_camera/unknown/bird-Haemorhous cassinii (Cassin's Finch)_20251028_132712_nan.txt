@@ -1,0 +1,7 @@
+Detection time: 13:27:12
+Top prediction: Haemorhous cassinii (Cassin's Finch) (nan%)
+
+Top 3 predictions:
+1. background: nan%
+2. Plegadis falcinellus (Glossy Ibis): nan%
+3. Buteo plagiatus (Gray Hawk): nan%

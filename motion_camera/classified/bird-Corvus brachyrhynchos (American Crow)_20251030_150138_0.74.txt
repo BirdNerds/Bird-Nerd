@@ -1,0 +1,6 @@
+Top prediction: Corvus brachyrhynchos (American Crow) (74.15%)
+
+Top 3 predictions:
+1. Corvus brachyrhynchos (American Crow): 74.15%
+2. Hirundo rustica (Barn Swallow): 10.03%
+3. Poecile carolinensis (Carolina Chickadee): 10.03%

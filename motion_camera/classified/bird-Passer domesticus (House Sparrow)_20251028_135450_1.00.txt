@@ -1,0 +1,6 @@
+Top prediction: Passer domesticus (House Sparrow) (100.00%)
+
+Top 3 predictions:
+1. Passer domesticus (House Sparrow): 100.00%
+2. Turdus migratorius (American Robin): 0.00%
+3. Corvus brachyrhynchos (American Crow): 0.00%

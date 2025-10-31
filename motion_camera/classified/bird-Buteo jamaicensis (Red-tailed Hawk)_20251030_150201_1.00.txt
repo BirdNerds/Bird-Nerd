@@ -1,0 +1,6 @@
+Top prediction: Buteo jamaicensis (Red-tailed Hawk) (99.99%)
+
+Top 3 predictions:
+1. Buteo jamaicensis (Red-tailed Hawk): 99.99%
+2. Falco sparverius (American Kestrel): 0.00%
+3. Buteo buteo (Common Buzzard): 0.00%

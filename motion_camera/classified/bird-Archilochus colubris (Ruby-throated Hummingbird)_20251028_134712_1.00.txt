@@ -1,0 +1,6 @@
+Top prediction: Archilochus colubris (Ruby-throated Hummingbird) (100.00%)
+
+Top 3 predictions:
+1. Archilochus colubris (Ruby-throated Hummingbird): 100.00%
+2. Passer domesticus (House Sparrow): 0.00%
+3. Dumetella carolinensis (Gray Catbird): 0.00%

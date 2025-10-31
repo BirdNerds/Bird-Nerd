@@ -1,0 +1,6 @@
+Top prediction: background (66.35%)
+
+Top 3 predictions:
+1. background: 66.35%
+2. Passer domesticus (House Sparrow): 24.41%
+3. Setophaga coronata (Yellow-rumped Warbler): 1.22%

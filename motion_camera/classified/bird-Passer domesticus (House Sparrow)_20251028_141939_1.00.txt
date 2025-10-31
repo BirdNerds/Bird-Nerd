@@ -1,0 +1,6 @@
+Top prediction: Passer domesticus (House Sparrow) (100.00%)
+
+Top 3 predictions:
+1. Passer domesticus (House Sparrow): 100.00%
+2. background: 0.00%
+3. Columba livia (Rock Pigeon): 0.00%

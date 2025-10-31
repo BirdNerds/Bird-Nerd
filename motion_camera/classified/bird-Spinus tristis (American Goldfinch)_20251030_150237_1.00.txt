@@ -1,0 +1,6 @@
+Top prediction: Spinus tristis (American Goldfinch) (99.75%)
+
+Top 3 predictions:
+1. Spinus tristis (American Goldfinch): 99.75%
+2. Spinus psaltria (Lesser Goldfinch): 0.25%
+3. Passer domesticus (House Sparrow): 0.00%

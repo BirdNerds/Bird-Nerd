@@ -1,0 +1,6 @@
+Top prediction: Turdus migratorius (American Robin) (3500.00%)
+
+Top 3 predictions:
+1. Turdus migratorius (American Robin): 3500.00%
+2. Passer domesticus (House Sparrow): 1500.00%
+3. Columba livia (Rock Pigeon): 1200.00%

@@ -1,0 +1,6 @@
+Top prediction: Passer domesticus (House Sparrow) (99.90%)
+
+Top 3 predictions:
+1. Passer domesticus (House Sparrow): 99.90%
+2. Cardinalis cardinalis (Northern Cardinal): 0.09%
+3. Mimus polyglottos (Northern Mockingbird): 0.00%

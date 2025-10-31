@@ -1,0 +1,6 @@
+Top prediction: Passer domesticus (House Sparrow) (99.54%)
+
+Top 3 predictions:
+1. Passer domesticus (House Sparrow): 99.54%
+2. Corvus brachyrhynchos (American Crow): 0.25%
+3. Colaptes auratus (Northern Flicker): 0.09%

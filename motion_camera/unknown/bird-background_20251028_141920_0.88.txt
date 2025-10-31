@@ -1,0 +1,6 @@
+Top prediction: background (87.89%)
+
+Top 3 predictions:
+1. background: 87.89%
+2. Haemorhous mexicanus (House Finch): 11.89%
+3. Passer domesticus (House Sparrow): 0.22%

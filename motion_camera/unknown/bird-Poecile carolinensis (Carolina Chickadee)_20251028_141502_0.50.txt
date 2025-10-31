@@ -1,0 +1,6 @@
+Top prediction: Poecile carolinensis (Carolina Chickadee) (50.00%)
+
+Top 3 predictions:
+1. Poecile atricapillus (Black-capped Chickadee): 50.00%
+2. Poecile carolinensis (Carolina Chickadee): 50.00%
+3. Parus major (Great Tit): 0.00%

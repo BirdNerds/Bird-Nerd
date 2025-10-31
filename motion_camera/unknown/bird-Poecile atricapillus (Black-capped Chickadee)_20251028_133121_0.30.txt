@@ -1,0 +1,6 @@
+Top prediction: Poecile atricapillus (Black-capped Chickadee) (29.81%)
+
+Top 3 predictions:
+1. Poecile atricapillus (Black-capped Chickadee): 29.81%
+2. Lophodytes cucullatus (Hooded Merganser): 29.81%
+3. Tadorna variegata (Paradise Shelduck): 10.97%
