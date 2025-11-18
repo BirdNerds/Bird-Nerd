@@ -1,0 +1,6 @@
+Top prediction: Poecile carolinensis (Carolina Chickadee) (99.75%)
+
+Top 3 predictions:
+1. Poecile carolinensis (Carolina Chickadee): 99.75%
+2. Poecile atricapillus (Black-capped Chickadee): 0.25%
+3. Periparus ater (Coal Tit): 0.00%

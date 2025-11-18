@@ -1,0 +1,6 @@
+Top prediction: Poecile atricapillus (Black-capped Chickadee) (100.00%)
+
+Top 3 predictions:
+1. Poecile atricapillus (Black-capped Chickadee): 100.00%
+2. Poecile carolinensis (Carolina Chickadee): 0.00%
+3. Passer domesticus (House Sparrow): 0.00%

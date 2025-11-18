@@ -1,0 +1,6 @@
+Top prediction: Hirundo rustica (Barn Swallow) (32.08%)
+
+Top 3 predictions:
+1. Passer domesticus (House Sparrow): 32.08%
+2. Archilochus colubris (Ruby-throated Hummingbird): 32.08%
+3. Hirundo rustica (Barn Swallow): 32.08%
