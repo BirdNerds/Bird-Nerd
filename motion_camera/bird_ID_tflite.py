@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Bird Detection and Classification using TensorFlow Lite
 Combines motion detection with on-device ML classification
@@ -30,50 +29,44 @@ except ImportError:
     import tensorflow as tf
 
 # ============= CONFIGURATION =============
-# Directories
-MOTION_DIR = "/home/tocila/Documents/Motion_Camera/images"
-CLASSIFIED_DIR = "/home/tocila/Documents/Motion_Camera/classified"
-UNKNOWN_DIR = "/home/tocila/Documents/Motion_Camera/unknown"
+# Directories - ALL relative to script location
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGES_DIR = os.path.join(SCRIPT_DIR, "images")
+UNCLEAR_DIR = os.path.join(SCRIPT_DIR, "unclear")
 TEMP_DIR = "/tmp/bird_feeder"
+LOG_FILE = os.path.join(SCRIPT_DIR, "bird_sightings.log")
 
 # Model Settings
-MODEL_PATH = "/home/tocila/Documents/Motion_Camera/models/bird_classifier.tflite"
-LABELS_PATH = "/home/tocila/Documents/Motion_Camera/models/labels.txt"
-CONFIDENCE_THRESHOLD = 0.6  # Minimum confidence to classify (0.0 to 1.0)
+MODEL_PATH = os.path.join(SCRIPT_DIR, "models", "bird_classifier.tflite")
+LABELS_PATH = os.path.join(SCRIPT_DIR, "models", "labels.txt")
+CONFIDENCE_THRESHOLD = 0.6  # Minimum confidence to save to /images/
 
 # Motion Detection Settings
-MOTION_THRESHOLD = 40  # Increased from 25 to reduce false positives
-MIN_AREA = 2000       # Increased from 500 to require larger movement
+MOTION_THRESHOLD = 40
+MIN_AREA = 2000
 BLUR_SIZE = 21
 
 # Large-motion and bbox padding heuristics
 LARGE_MOVE_RATIO = 0.6   # If largest bbox covers >60% of frame, skip classification
 BBOX_PADDING = 1.25      # Scale bbox by this factor when cropping for classification
 
-# NEW: Pre-classification heuristics to avoid classifying smooth backgrounds
-LAP_VAR_THRESHOLD = 12.0         # lowered: variance of Laplacian below this => too smooth (skip)
-# widen aspect ratio to accept narrow/tall phone photos or wide crops
+# Pre-classification heuristics to avoid classifying smooth backgrounds
+LAP_VAR_THRESHOLD = 12.0         # variance of Laplacian below this => too smooth (skip)
 ASPECT_RATIO_RANGE = (0.08, 12.0) # acceptable w/h ratio for candidate crop
 
 # Camera Settings
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
-CAPTURE_TIMEOUT = 2000
+CAPTURE_TIMEOUT = 2000 # milliseconds
 
 # Timing
-CHECK_INTERVAL = 0.5
-COOLDOWN_PERIOD = 2.0
-
-# Image Settings
-IMAGE_PREFIX = "bird-"
-
-# Filter Settings - Don't save these detections
-IGNORE_LABELS = ['background', 'person', 'cat', 'dog', 'car', 'truck']
+CHECK_INTERVAL = 0.5 # seconds between motion checks
+COOLDOWN_PERIOD = 2.0 # seconds to wait after a detection
 
 # ============= SETUP =============
 def setup_directories():
     """Create necessary directories"""
-    for directory in [MOTION_DIR, CLASSIFIED_DIR, UNKNOWN_DIR, TEMP_DIR]:
+    for directory in [IMAGES_DIR, UNCLEAR_DIR, TEMP_DIR]:
         Path(directory).mkdir(parents=True, exist_ok=True)
     print("Directories created")
 
@@ -236,34 +229,70 @@ def detect_motion(frame1, frame2):
     
     return motion_detected, total_area, bboxes
 
+def log_detection(label, scientific_name, confidence, top_3):
+    """
+    Append detection to bird_sightings.log in the specified format
+    """
+    with open(LOG_FILE, 'a') as f:
+        # Timestamp
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        f.write(f"{timestamp}\n")
+        
+        # Common name
+        f.write(f"{label}\n")
+        
+        # Scientific name with confidence
+        f.write(f"{scientific_name} ({confidence:.2%})\n")
+        
+        # Blank line
+        f.write("\n")
+        
+        # Top 3 predictions
+        f.write("Top 3 predictions:\n")
+        for i, (lbl, conf) in enumerate(top_3, 1):
+            # Extract scientific name from label (assumes format like in labels.txt)
+            # If label contains both common and scientific, parse it
+            # For now, we'll just use the label as-is
+            f.write(f"{i}. {lbl}: {conf:.2%}\n")
+        
+        # Footer separator
+        f.write("\n**********************************************************************\n")
+
 def save_classified_image(frame, label, confidence, top_3):
-    """Save image with classification info"""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    """
+    Save image to /images/ or /unclear/ based on confidence
+    Filename format: year_month_day_hour_minute_second_commonname.jpg
+    Log to bird_sightings.log
+    """
+    timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     time_str = datetime.now().strftime("%H:%M:%S")
     
-    # Determine save location
-    if label.lower() in [x.lower() for x in IGNORE_LABELS]:
-        save_dir = UNKNOWN_DIR
-        print(f"{time_str}  Ignoring: {label} ({confidence:.2%})")
-    elif confidence >= CONFIDENCE_THRESHOLD:
-        save_dir = CLASSIFIED_DIR
-        print(f"{time_str}  Detected: {label} ({confidence:.2%})")
+    # Clean label for filename (replace spaces with underscores, remove special chars)
+    clean_label = label.replace(' ', '_').replace('(', '').replace(')', '')
+    clean_label = ''.join(c for c in clean_label if c.isalnum() or c == '_')
+    
+    # Determine save location based on confidence
+    if confidence >= CONFIDENCE_THRESHOLD:
+        save_dir = IMAGES_DIR
+        status = "Detected"
     else:
-        save_dir = UNKNOWN_DIR
-        print(f"{time_str}  Low confidence: {label} ({confidence:.2%})")
+        save_dir = UNCLEAR_DIR
+        status = "Low confidence"
+    
+    # Create filename
+    filename = f"{timestamp}_{clean_label}.jpg"
+    filepath = os.path.join(save_dir, filename)
     
     # Save image
-    filename = f"{IMAGE_PREFIX}{label}_{timestamp}_{confidence:.2f}.jpg"
-    filepath = os.path.join(save_dir, filename)
     cv2.imwrite(filepath, frame)
     
-    # Save metadata
-    metadata_path = filepath.replace('.jpg', '.txt')
-    with open(metadata_path, 'w') as f:
-        f.write(f"Top prediction: {label} ({confidence:.2%})\n")
-        f.write(f"\nTop 3 predictions:\n")
-        for i, (lbl, conf) in enumerate(top_3, 1):
-            f.write(f"{i}. {lbl}: {conf:.2%}\n")
+    print(f"{time_str}  {status}: {label} ({confidence:.2%}) -> {filename}")
+    
+    # Log to bird_sightings.log (assume label contains scientific name or we need to extract it)
+    # For now, we'll use the label as both common and scientific
+    # You may need to adjust this based on your labels.txt format
+    scientific_name = label  # Modify if your labels have a different format
+    log_detection(label, scientific_name, confidence, top_3)
     
     return filepath
 
@@ -276,7 +305,9 @@ def main():
     # Setup
     setup_directories()
     
-    # Print pre-check thresholds for easier tuning
+    print(f"Images directory: {IMAGES_DIR}")
+    print(f"Unclear directory: {UNCLEAR_DIR}")
+    print(f"Log file: {LOG_FILE}")
     print(f"Pre-classify thresholds: lap_var >= {LAP_VAR_THRESHOLD}, aspect_ratio in {ASPECT_RATIO_RANGE}")
     
     # Check if model exists
@@ -296,8 +327,6 @@ def main():
             print("Running in motion-only mode...\n")
             classifier = None
     
-    print(f"Classified images: {CLASSIFIED_DIR}")
-    print(f"Unknown images: {UNKNOWN_DIR}")
     print(f"Confidence threshold: {CONFIDENCE_THRESHOLD}")
     print("=" * 60)
     print("Starting... Press Ctrl+C to stop\n")
@@ -355,12 +384,6 @@ def main():
                         # If bbox is huge relative to frame, it's probably background/camera motion -> skip classify
                         if bbox_ratio >= LARGE_MOVE_RATIO:
                             print(f"{now_str}  Skipping classification (large motion region: {bbox_ratio:.2%})")
-                            # Save to motion dir instead
-                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                            filename = f"{IMAGE_PREFIX}{timestamp}.jpg"
-                            filepath = os.path.join(MOTION_DIR, filename)
-                            cv2.imwrite(filepath, current_frame)
-                            print(f"{now_str}  Saved: {filename}")
                             detection_count += 1
                         else:
                             # Expand bbox with padding and clip to frame bounds
@@ -375,13 +398,10 @@ def main():
                             
                             # Crop and classify the ROI
                             crop = current_frame[y1:y2, x1:x2]
+                            
                             # Fallback if crop empty for any reason
                             if crop.size == 0:
                                 print(f"{now_str}  Warning: empty crop; skipping classification")
-                                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                                filename = f"{IMAGE_PREFIX}{timestamp}.jpg"
-                                filepath = os.path.join(MOTION_DIR, filename)
-                                cv2.imwrite(filepath, current_frame)
                                 detection_count += 1
                             else:
                                 # Pre-classification checks: aspect ratio and Laplacian variance
@@ -389,49 +409,27 @@ def main():
                                 ar = (cw / float(ch)) if ch > 0 else 0.0
                                 if not (ASPECT_RATIO_RANGE[0] <= ar <= ASPECT_RATIO_RANGE[1]):
                                     print(f"{now_str}  Skipping classification (bad aspect ratio: {ar:.2f})")
-                                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                                    filename = f"{IMAGE_PREFIX}{timestamp}.jpg"
-                                    filepath = os.path.join(MOTION_DIR, filename)
-                                    cv2.imwrite(filepath, current_frame)
                                     detection_count += 1
                                 else:
                                     gray_crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
                                     lap_var = cv2.Laplacian(gray_crop, cv2.CV_64F).var()
                                     if lap_var < LAP_VAR_THRESHOLD:
                                         print(f"{now_str}  Skipping classification (low texture: lap_var={lap_var:.2f})")
-                                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                                        filename = f"{IMAGE_PREFIX}{timestamp}.jpg"
-                                        filepath = os.path.join(MOTION_DIR, filename)
-                                        cv2.imwrite(filepath, current_frame)
                                         detection_count += 1
                                     else:
-                                        # Ensure we have a timestamp for debug filenames
-                                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                        # CLASSIFY!
                                         label, confidence, top_3 = classifier.classify(crop)
-                                        # Save full frame (for context) and keep top_3 metadata
+                                        
+                                        # Save image and log detection
                                         save_classified_image(current_frame, label, confidence, top_3)
-                                        # Optionally save the crop for debugging
-                                        debug_crop_path = os.path.join(TEMP_DIR, f"crop_{timestamp}.jpg")
-                                        try:
-                                            cv2.imwrite(debug_crop_path, crop)
-                                        except Exception:
-                                            pass
+                                        
                                         detection_count += 1
                     else:
-                        # No bbox (shouldn't happen if motion_detected), save full frame
-                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        filename = f"{IMAGE_PREFIX}{timestamp}.jpg"
-                        filepath = os.path.join(MOTION_DIR, filename)
-                        cv2.imwrite(filepath, current_frame)
-                        print(f"{now_str}  Saved: {filename}")
+                        # No bbox (shouldn't happen if motion_detected)
+                        print(f"{now_str}  Motion detected but no bbox found")
                         detection_count += 1
                 else:
-                    # Just save to motion dir
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"{IMAGE_PREFIX}{timestamp}.jpg"
-                    filepath = os.path.join(MOTION_DIR, filename)
-                    cv2.imwrite(filepath, current_frame)
-                    print(f"{now_str}  Saved: {filename}")
+                    # No classifier, just count motion
                     detection_count += 1
                 
                 time.sleep(COOLDOWN_PERIOD)
