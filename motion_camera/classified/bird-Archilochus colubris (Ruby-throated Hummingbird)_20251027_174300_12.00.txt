@@ -1,6 +1,0 @@
-Top prediction: Archilochus colubris (Ruby-throated Hummingbird) (1200.00%)
-
-Top 3 predictions:
-1. Archilochus colubris (Ruby-throated Hummingbird): 1200.00%
-2. Cyanocitta cristata (Blue Jay): 1100.00%
-3. Corvus brachyrhynchos (American Crow): 1100.00%

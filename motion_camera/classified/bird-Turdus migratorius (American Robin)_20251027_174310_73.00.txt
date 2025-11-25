@@ -1,6 +1,0 @@
-Top prediction: Turdus migratorius (American Robin) (7300.00%)
-
-Top 3 predictions:
-1. Turdus migratorius (American Robin): 7300.00%
-2. Zenaida macroura (Mourning Dove): 2700.00%
-3. Passer domesticus (House Sparrow): 1300.00%

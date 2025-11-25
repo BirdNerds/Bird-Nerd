@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (100.00%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 100.00%
-2. Haemorhous mexicanus (House Finch): 0.00%
-3. Sayornis nigricans (Black Phoebe): 0.00%

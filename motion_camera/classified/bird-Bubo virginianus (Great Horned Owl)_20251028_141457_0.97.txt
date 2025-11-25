@@ -1,6 +1,0 @@
-Top prediction: Bubo virginianus (Great Horned Owl) (97.26%)
-
-Top 3 predictions:
-1. Bubo virginianus (Great Horned Owl): 97.26%
-2. background: 1.78%
-3. Archilochus colubris (Ruby-throated Hummingbird): 0.66%

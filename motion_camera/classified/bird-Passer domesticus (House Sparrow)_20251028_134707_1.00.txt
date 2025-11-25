@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (99.92%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 99.92%
-2. background: 0.03%
-3. Hirundo rustica (Barn Swallow): 0.03%

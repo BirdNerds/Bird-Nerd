@@ -1,6 +1,0 @@
-Top prediction: Agelaius phoeniceus (Red-winged Blackbird) (100.00%)
-
-Top 3 predictions:
-1. Agelaius phoeniceus (Red-winged Blackbird): 100.00%
-2. Agelaius tricolor (Tricolored Blackbird): 0.00%
-3. Archilochus colubris (Ruby-throated Hummingbird): 0.00%

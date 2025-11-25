@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (99.07%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 99.07%
-2. Selasphorus rufus (Rufous Hummingbird): 0.67%
-3. Archilochus colubris (Ruby-throated Hummingbird): 0.25%

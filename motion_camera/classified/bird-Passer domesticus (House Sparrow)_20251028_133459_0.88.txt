@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (88.08%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 88.08%
-2. Hirundo rustica (Barn Swallow): 11.92%
-3. Calypte anna (Anna's Hummingbird): 0.00%
