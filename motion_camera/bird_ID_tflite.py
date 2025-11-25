@@ -34,7 +34,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGES_DIR = os.path.join(SCRIPT_DIR, "images")
 UNCLEAR_DIR = os.path.join(SCRIPT_DIR, "unclear")
 TEMP_DIR = "/tmp/bird_feeder"
-LOG_FILE = os.path.join(SCRIPT_DIR, "bird_sightings.log")
+LOG_FILE = os.path.join(SCRIPT_DIR, "sightings.log")
 
 # Model Settings
 MODEL_PATH = os.path.join(SCRIPT_DIR, "models", "bird_classifier.tflite")
