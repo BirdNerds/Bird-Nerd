@@ -1,6 +1,0 @@
-Top prediction: Archilochus colubris (Ruby-throated Hummingbird) (95.26%)
-
-Top 3 predictions:
-1. Archilochus colubris (Ruby-throated Hummingbird): 95.26%
-2. Archilochus alexandri (Black-chinned Hummingbird): 4.74%
-3. Selasphorus rufus (Rufous Hummingbird): 0.00%
