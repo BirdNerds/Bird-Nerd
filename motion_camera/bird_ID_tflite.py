@@ -30,10 +30,17 @@ except ImportError:
     import tensorflow as tf
 
 # ============= CONFIGURATION =============
+<<<<<<< Updated upstream
 # Directories
 MOTION_DIR = "/home/tocila/Documents/Motion_Camera/images"
 CLASSIFIED_DIR = "/home/tocila/Documents/Motion_Camera/classified"
 UNKNOWN_DIR = "/home/tocila/Documents/Motion_Camera/unknown"
+=======
+# Directories - ALL relative to script location
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+IMAGES_DIR = os.path.join(SCRIPT_DIR, "images")
+UNCLEAR_DIR = os.path.join(SCRIPT_DIR, "unclear_images")
+>>>>>>> Stashed changes
 TEMP_DIR = "/tmp/bird_feeder"
 
 # Model Settings
