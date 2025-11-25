@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (98.20%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 98.20%
-2. Poecile carolinensis (Carolina Chickadee): 1.80%
-3. Corvus brachyrhynchos (American Crow): 0.00%

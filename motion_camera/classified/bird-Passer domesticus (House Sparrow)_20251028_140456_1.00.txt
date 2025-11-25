@@ -1,5 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (99.66%)
-Top 3:
-1. Passer domesticus (House Sparrow): 99.66%
-2. Setophaga coronata (Yellow-rumped Warbler): 0.09%
-3. Calypte anna (Anna's Hummingbird): 0.09%

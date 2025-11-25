@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (71.72%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 71.72%
-2. Corvus brachyrhynchos (American Crow): 26.39%
-3. Haemorhous mexicanus (House Finch): 1.31%

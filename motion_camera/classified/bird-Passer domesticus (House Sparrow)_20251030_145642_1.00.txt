@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (99.96%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 99.96%
-2. Columba livia (Rock Pigeon): 0.03%
-3. Haemorhous mexicanus (House Finch): 0.00%

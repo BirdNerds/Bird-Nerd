@@ -1,6 +1,0 @@
-Top prediction: Sturnus vulgaris (European Starling) (100.00%)
-
-Top 3 predictions:
-1. Sturnus vulgaris (European Starling): 100.00%
-2. Columba livia (Rock Pigeon): 0.00%
-3. Corvus monedula (Eurasian Jackdaw): 0.00%

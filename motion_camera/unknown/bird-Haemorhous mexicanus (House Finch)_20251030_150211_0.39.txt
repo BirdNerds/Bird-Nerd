@@ -1,6 +1,0 @@
-Top prediction: Haemorhous mexicanus (House Finch) (39.24%)
-
-Top 3 predictions:
-1. Haemorhous mexicanus (House Finch): 39.24%
-2. Zenaida macroura (Mourning Dove): 39.24%
-3. Passer domesticus (House Sparrow): 14.43%

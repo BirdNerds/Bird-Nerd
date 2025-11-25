@@ -1,6 +1,0 @@
-Top prediction: Cairina moschata domestica (Domestic Muscovy Duck) (99.91%)
-
-Top 3 predictions:
-1. Cairina moschata domestica (Domestic Muscovy Duck): 99.91%
-2. Calypte anna (Anna's Hummingbird): 0.03%
-3. Fulica americana (American Coot): 0.01%

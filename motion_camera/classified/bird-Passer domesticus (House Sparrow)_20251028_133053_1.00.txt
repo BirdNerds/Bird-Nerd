@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (99.85%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 99.85%
-2. Buteo lineatus (Red-shouldered Hawk): 0.09%
-3. Zenaida macroura (Mourning Dove): 0.03%

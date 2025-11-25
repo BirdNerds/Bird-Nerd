@@ -1,6 +1,0 @@
-Top prediction: Turdus migratorius (American Robin) (100.00%)
-
-Top 3 predictions:
-1. Turdus migratorius (American Robin): 100.00%
-2. Passerina ciris (Painted Bunting): 0.00%
-3. Pyrrhula pyrrhula (Eurasian Bullfinch): 0.00%

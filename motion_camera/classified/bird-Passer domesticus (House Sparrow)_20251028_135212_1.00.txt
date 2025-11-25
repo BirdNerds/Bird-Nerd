@@ -1,6 +1,0 @@
-Top prediction: Passer domesticus (House Sparrow) (99.99%)
-
-Top 3 predictions:
-1. Passer domesticus (House Sparrow): 99.99%
-2. Zenaida macroura (Mourning Dove): 0.01%
-3. Columba livia (Rock Pigeon): 0.00%

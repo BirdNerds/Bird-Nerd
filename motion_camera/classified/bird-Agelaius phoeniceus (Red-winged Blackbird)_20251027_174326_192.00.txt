@@ -1,6 +1,0 @@
-Top prediction: Agelaius phoeniceus (Red-winged Blackbird) (19200.00%)
-
-Top 3 predictions:
-1. Agelaius phoeniceus (Red-winged Blackbird): 19200.00%
-2. Icterus galbula (Baltimore Oriole): 300.00%
-3. Passer domesticus (House Sparrow): 200.00%
