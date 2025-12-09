@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Bird Gallery</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>Bird Gallery</h1>
+        <p class="subtitle">Photos taken from Raspberry Pi — data pulled from <code>sightings.log</code></p>
+    </header>
+
+    <main>
+
+        <section id="gallery" class="grid"></section>
+
+    </main>
+
+    <template id="card-template">
+        <figure class="card">
+            <img src="" alt="bird photo">
+            <figcaption>
+                <div class="meta">
+                    <div class="species"></div>
+                    <div class="datetime"></div>
+                </div>
+                <div class="notes"></div>
+            </figcaption>
+        </figure>
+    </template>
+
+    <script src="/script.js"></script>
+</body>
+
+</html>
