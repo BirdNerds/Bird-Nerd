@@ -1,5 +1,5 @@
 # Bird-Nerd
-CS 396/398: Senior Project - An IoT Bird Feeder with AI-Powered Species Identification
+CS 396/398: Senior Project - An IoT Bird Feeder with AI-Powered Species Identification 
 
 ## Vision
 Bird Nerd provides backyard bird watchers with an intelligent, automated tool that brings joy and discovery to nature enthusiasts. By utilizing AI-powered species identification with IoT monitoring, the system automatically recognizes visiting birds at the bird feeder, takes a snapshot, and shares images of sightings on social media. 
