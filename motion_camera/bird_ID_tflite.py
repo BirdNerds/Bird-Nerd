@@ -28,6 +28,9 @@ except ImportError:
     print("tflite_runtime not found, trying tensorflow")
     import tensorflow as tf
 
+# Database imports
+from db_helper import BirdDatabase, ServerSync
+
 # ============= CONFIGURATION =============
 # Directories
 MOTION_DIR = "/home/tocila/Documents/Motion_Camera/images"
@@ -67,6 +70,11 @@ CAPTURE_TIMEOUT = 2000 # milliseconds
 # Timing
 CHECK_INTERVAL = 0.5 # seconds between motion checks
 COOLDOWN_PERIOD = 2.0 # seconds to wait after a detection
+
+# Database Settings
+DB_PATH = os.path.join(SCRIPT_DIR, "birds.db")
+ENABLE_SERVER_SYNC = True  # Set to False to disable uploading
+CALVIN_USERNAME = "jt42"  # Change this to your Calvin username
 
 # ============= SETUP =============
 def setup_directories():
@@ -263,14 +271,16 @@ def log_detection(label, scientific_name, confidence, top_3):
         # Footer separator
         f.write("\n**********************************************************************\n")
 
-def save_classified_image(frame, label, confidence, top_3):
+def save_classified_image(frame, label, confidence, top_3, db=None, server_sync=None):
     """
     Save image to /images/ or /unclear/ based on confidence
     Filename format: year_month_day_hour_minute_second_commonname.jpg
-    Log to bird_sightings.log
+    Log to bird_sightings.log and database
+    Optionally sync to server
     """
-    timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    time_str = datetime.now().strftime("%H:%M:%S")
+    timestamp_obj = datetime.now()
+    timestamp = timestamp_obj.strftime("%Y_%m_%d_%H_%M_%S")
+    time_str = timestamp_obj.strftime("%H:%M:%S")
     
     # Clean label for filename (replace spaces with underscores, remove special chars)
     clean_label = label.replace(' ', '_').replace('(', '').replace(')', '')
@@ -299,6 +309,25 @@ def save_classified_image(frame, label, confidence, top_3):
     scientific_name = label  # Modify if your labels have a different format
     log_detection(label, scientific_name, confidence, top_3)
     
+    # Save to database if available
+    if db is not None:
+        try:
+            sighting_id = db.add_sighting(
+                common_name=label,
+                scientific_name=scientific_name,
+                confidence=confidence,
+                image_filename=filename,
+                image_path=filepath,
+                top_3_predictions=top_3,
+                timestamp=timestamp_obj
+            )
+            
+            # Sync to server if enabled
+            if server_sync is not None and ENABLE_SERVER_SYNC:
+                server_sync.sync_sighting(db, sighting_id)
+        except Exception as e:
+            print(f"  Warning: Database/sync error: {e}")
+    
     return filepath
 
 def main():
@@ -313,7 +342,31 @@ def main():
     print(f"Images directory: {IMAGES_DIR}")
     print(f"Unclear directory: {UNCLEAR_DIR}")
     print(f"Log file: {LOG_FILE}")
+    print(f"Database: {DB_PATH}")
     print(f"Pre-classify thresholds: lap_var >= {LAP_VAR_THRESHOLD}, aspect_ratio in {ASPECT_RATIO_RANGE}")
+    
+    # Initialize database
+    db = None
+    server_sync = None
+    try:
+        db = BirdDatabase(DB_PATH)
+        print(f"Database initialized ({db.get_total_sightings()} sightings recorded)")
+        
+        # Initialize server sync if enabled
+        if ENABLE_SERVER_SYNC:
+            server_sync = ServerSync(username=CALVIN_USERNAME)
+            print(f"Server sync enabled (uploading to {CALVIN_USERNAME}@students.cs.calvin.edu)")
+            # Test connection (non-blocking, just informational)
+            try:
+                server_sync.test_connection()
+            except Exception as e:
+                print(f"  Warning: Server connection test failed: {e}")
+                print(f"  Will attempt uploads anyway...")
+        else:
+            print("Server sync disabled")
+    except Exception as e:
+        print(f"Warning: Database initialization failed: {e}")
+        print("Continuing without database...")
     
     # Check if model exists
     if not os.path.exists(MODEL_PATH):
@@ -426,7 +479,7 @@ def main():
                                         label, confidence, top_3 = classifier.classify(crop)
                                         
                                         # Save image and log detection
-                                        save_classified_image(current_frame, label, confidence, top_3)
+                                        save_classified_image(current_frame, label, confidence, top_3, db, server_sync)
                                         
                                         detection_count += 1
                     else:
@@ -450,12 +503,20 @@ def main():
         print("Detection stopped")
         print(f"Total checks: {check_count}")
         print(f"Detections: {detection_count}")
+        if db:
+            print(f"Total sightings in database: {db.get_total_sightings()}")
         print("=" * 60)
     
     except Exception as e:
         print(f"\nError: {e}")
         import traceback
         traceback.print_exc()
+    
+    finally:
+        # Close database connection
+        if db:
+            db.close()
+            print("Database connection closed")
 
 if __name__ == "__main__":
     main()

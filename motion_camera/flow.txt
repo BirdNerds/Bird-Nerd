@@ -1,0 +1,12 @@
+Raspberry Pi (at home):
+├── bird_ID_tflite.py (captures & classifies)
+├── db_helper.py (NEW - database operations)
+├── images/ (local storage)
+├── sightings.log (keep for backup)
+└── birds.db (SQLite database)
+
+Calvin Server (~jt42):
+├── public_html/
+│   ├── index.html (your website)
+│   ├── images/ (bird photos served to web)
+│   └── birds.db (copy of database)
