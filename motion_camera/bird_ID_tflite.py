@@ -13,6 +13,17 @@ from datetime import datetime
 from pathlib import Path
 import warnings
 
+try:
+    import firebase_helper
+    FIREBASE_ENABLED = True
+    firebase_helper.initialize_firebase()
+except ImportError:
+    print("firebase_helper not found - Firebase logging disabled")
+    FIREBASE_ENABLED = False
+except Exception as e:
+    print(f"Firebase initialization failed: {e}")
+    FIREBASE_ENABLED = False
+
 # Suppress noisy NumPy getlimits UserWarning about smallest subnormal being zero
 warnings.filterwarnings(
     "ignore",
@@ -267,7 +278,7 @@ def save_classified_image(frame, label, confidence, top_3):
     """
     Save image to /images/ or /unclear/ based on confidence
     Filename format: year_month_day_hour_minute_second_commonname.jpg
-    Log to bird_sightings.log
+    Log to bird_sightings.log AND Firebase
     """
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     time_str = datetime.now().strftime("%H:%M:%S")
@@ -293,11 +304,21 @@ def save_classified_image(frame, label, confidence, top_3):
     
     print(f"{time_str}  {status}: {label} ({confidence:.2%}) -> {filename}")
     
-    # Log to bird_sightings.log (assume label contains scientific name or we need to extract it)
-    # For now, we'll use the label as both common and scientific
-    # You may need to adjust this based on your labels.txt format
+    # Log to bird_sightings.log
     scientific_name = label  # Modify if your labels have a different format
     log_detection(label, scientific_name, confidence, top_3)
+    
+    # Log to Firebase if enabled
+    if FIREBASE_ENABLED:
+        try:
+            firebase_helper.add_bird_sighting(
+                common_name=label,
+                scientific_name=scientific_name,
+                confidence=confidence,
+                top_3_predictions=top_3
+            )
+        except Exception as e:
+            print(f"Warning: Failed to log to Firebase: {e}")
     
     return filepath
 
