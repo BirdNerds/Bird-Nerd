@@ -8,10 +8,14 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from datetime import datetime
 import os
+from dotenv import load_dotenv
 
-# Path to your service account key file
-# UPDATE THIS PATH to where you saved the JSON file on your Pi
-SERVICE_ACCOUNT_KEY = "/home/tocila/Documents/Bird-Nerd/motion_camera/bird-nerd-firebase-adminsdk.json"
+# Load environment variables from .env file
+load_dotenv()
+
+# Get credentials path from environment variable, with fallback
+SERVICE_ACCOUNT_KEY = os.getenv('FIREBASE_CREDENTIALS_PATH', 
+                                 '/home/tocila/Documents/Bird-Nerd/motion_camera/.credentials/bird-nerd-firebase-adminsdk.json')
 
 # Initialize Firebase (only once)
 _firebase_initialized = False
@@ -21,13 +25,15 @@ def initialize_firebase():
     global _firebase_initialized
     
     if _firebase_initialized:
-        return
+        return True
     
     try:
         # Check if service account key exists
         if not os.path.exists(SERVICE_ACCOUNT_KEY):
             print(f"ERROR: Firebase service account key not found at {SERVICE_ACCOUNT_KEY}")
-            print("Please update the SERVICE_ACCOUNT_KEY path in firebase_helper.py")
+            print("Please check:")
+            print("1. The .env file exists and has FIREBASE_CREDENTIALS_PATH set")
+            print("2. The credentials JSON file is in the .credentials directory")
             return False
         
         # Initialize the app with service account
@@ -35,7 +41,8 @@ def initialize_firebase():
         firebase_admin.initialize_app(cred)
         
         _firebase_initialized = True
-        print("Firebase initialized successfully")
+        print(f"✓ Firebase initialized successfully")
+        print(f"  Using credentials: {SERVICE_ACCOUNT_KEY}")
         return True
         
     except Exception as e:
@@ -95,7 +102,7 @@ def add_bird_sighting(common_name, scientific_name, confidence, top_3_prediction
         # doc_ref is a tuple: (timestamp, DocumentReference)
         doc_id = doc_ref[1].id
         
-        print(f"✓ Bird sighting added to Firebase: {common_name} (ID: {doc_id})")
+        print(f"✓ Logged to Firebase: {common_name} ({confidence:.2%}) [ID: {doc_id[:8]}...]")
         return doc_id
         
     except Exception as e:
@@ -137,7 +144,9 @@ def get_recent_sightings(limit=10):
 # Test function
 if __name__ == "__main__":
     """Test the Firebase connection"""
-    print("Testing Firebase connection...")
+    print("=" * 60)
+    print("Firebase Connection Test")
+    print("=" * 60)
     
     # Initialize
     if initialize_firebase():
@@ -159,19 +168,36 @@ if __name__ == "__main__":
         )
         
         if doc_id:
-            print(f"✓ Test sighting added successfully! Document ID: {doc_id}")
+            print(f"\n✓ Test sighting added successfully!")
+            print(f"  Document ID: {doc_id}")
             
             # Retrieve recent sightings
-            print("\nRetrieving recent sightings...")
+            print("\n" + "=" * 60)
+            print("Retrieving recent sightings...")
+            print("=" * 60)
             recent = get_recent_sightings(limit=5)
-            print(f"Found {len(recent)} recent sightings:")
+            print(f"\nFound {len(recent)} recent sightings:\n")
             for i, sighting in enumerate(recent, 1):
-                print(f"  {i}. {sighting['common_name']} - {sighting['confidence']:.2%} - {sighting['timestamp']}")
+                timestamp = sighting['timestamp'].strftime("%Y-%m-%d %H:%M:%S") if hasattr(sighting['timestamp'], 'strftime') else str(sighting['timestamp'])
+                print(f"{i}. {sighting['common_name']}")
+                print(f"   Scientific: {sighting['scientific_name']}")
+                print(f"   Confidence: {sighting['confidence']:.2%}")
+                print(f"   Time: {timestamp}")
+                print()
+            
+            print("=" * 60)
+            print("✓ All tests passed! Firebase is working correctly.")
+            print("=" * 60)
         else:
-            print("✗ Failed to add test sighting")
+            print("\n✗ Failed to add test sighting")
     else:
         print("\n✗ Firebase initialization failed")
-        print("\nTroubleshooting:")
-        print("1. Make sure you've downloaded the service account JSON file")
-        print("2. Update SERVICE_ACCOUNT_KEY path at the top of this file")
-        print("3. Run: pip install firebase-admin")
+        print("\n" + "=" * 60)
+        print("Troubleshooting Checklist:")
+        print("=" * 60)
+        print("1. Check .env file exists with FIREBASE_CREDENTIALS_PATH")
+        print("2. Verify credentials file exists in .credentials directory")
+        print("3. Confirm file permissions (chmod 600 on JSON file)")
+        print("4. Make sure python-dotenv is installed: pip install python-dotenv")
+        print("5. Ensure firebase-admin is installed: pip install firebase-admin")
+        print("=" * 60)
