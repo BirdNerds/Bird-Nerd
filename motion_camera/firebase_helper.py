@@ -76,7 +76,14 @@ def add_bird_sighting(common_name, scientific_name, confidence, top_3_prediction
         
         # Use provided timestamp or current time
         if timestamp is None:
-            timestamp = datetime.now()
+            try:
+                from tzlocal import get_localzone
+                local_tz = get_localzone()
+                timestamp = datetime.now(local_tz)
+            except ImportError:
+                # Fallback to UTC if tzlocal not available
+                from datetime import timezone as dt_timezone
+                timestamp = datetime.now(dt_timezone.utc)
         
         # Get timezone if not provided
         if timezone is None:
