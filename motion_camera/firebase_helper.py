@@ -9,6 +9,7 @@ from firebase_admin import firestore
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 
 # Load environment variables from .env file
 load_dotenv()
@@ -49,7 +50,7 @@ def initialize_firebase():
         print(f"Error initializing Firebase: {e}")
         return False
 
-def add_bird_sighting(common_name, scientific_name, confidence, top_3_predictions, timestamp=None):
+def add_bird_sighting(common_name, scientific_name, confidence, top_3_predictions, timestamp=None, timezone=None):
     """
     Add a bird sighting to Firestore
     
@@ -59,6 +60,7 @@ def add_bird_sighting(common_name, scientific_name, confidence, top_3_prediction
         confidence (float): Confidence score (0.0 to 1.0)
         top_3_predictions (list): List of tuples [(label, confidence), ...]
         timestamp (datetime, optional): Timestamp of sighting. Defaults to now.
+        timezone (str, optional): Timezone string (e.g., "America/New_York"). Defaults to system timezone.
     
     Returns:
         str: Document ID if successful, None if failed
@@ -74,7 +76,35 @@ def add_bird_sighting(common_name, scientific_name, confidence, top_3_prediction
         
         # Use provided timestamp or current time
         if timestamp is None:
-            timestamp = datetime.now()
+            try:
+                from tzlocal import get_localzone
+                local_tz = get_localzone()
+                timestamp = datetime.now(local_tz)
+            except ImportError:
+                # Fallback to UTC if tzlocal not available
+                from datetime import timezone as dt_timezone
+                timestamp = datetime.now(dt_timezone.utc)
+        
+        # Get timezone if not provided
+        if timezone is None:
+            import time
+            if time.daylight:
+                timezone_offset = -time.altzone
+            else:
+                timezone_offset = -time.timezone
+            
+            # Convert offset to hours
+            tz_hours = timezone_offset // 3600
+            tz_name = f"UTC{tz_hours:+d}"  # e.g., "UTC-5"
+            
+            # Try to get actual timezone name (requires tzlocal package)
+            try:
+                from tzlocal import get_localzone
+                tz_name = str(get_localzone())  # e.g., "America/New_York"
+            except ImportError:
+                pass  # Use UTC offset format
+            
+            timezone = tz_name
         
         # Format top 3 predictions for storage
         top_3_formatted = [
@@ -88,6 +118,7 @@ def add_bird_sighting(common_name, scientific_name, confidence, top_3_prediction
         # Create document data
         sighting_data = {
             'timestamp': timestamp,
+            'timezone': timezone,  # NEW: Store timezone
             'common_name': common_name,
             'scientific_name': scientific_name,
             'confidence': float(confidence),
@@ -102,7 +133,7 @@ def add_bird_sighting(common_name, scientific_name, confidence, top_3_prediction
         # doc_ref is a tuple: (timestamp, DocumentReference)
         doc_id = doc_ref[1].id
         
-        print(f"✓ Logged to Firebase: {common_name} ({confidence:.2%}) [ID: {doc_id[:8]}...]")
+        print(f"✓ Logged to Firebase: {common_name} ({confidence:.2%}) [ID: {doc_id[:8]}...] [{timezone}]")
         return doc_id
         
     except Exception as e:

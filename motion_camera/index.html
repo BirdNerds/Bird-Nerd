@@ -4,186 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bird Nerd - Live Sightings</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      background-color: #547c38;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
-      color: #ffffff;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    h1 {
-      text-align: center;
-      margin-bottom: 10px;
-      font-size: 2.5em;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .subtitle {
-      text-align: center;
-      color: #e8f5e9;
-      margin-bottom: 30px;
-      font-size: 1.2em;
-    }
-    
-    .stats {
-      background-color: rgba(255,255,255,0.1);
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 30px;
-      text-align: center;
-    }
-    
-    .stats h2 {
-      font-size: 1.5em;
-      margin-bottom: 10px;
-    }
-    
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-top: 15px;
-    }
-    
-    .stat-box {
-      background-color: rgba(255,255,255,0.15);
-      padding: 15px;
-      border-radius: 8px;
-    }
-    
-    .stat-number {
-      font-size: 2em;
-      font-weight: bold;
-      color: #ffeb3b;
-    }
-    
-    .stat-label {
-      color: #e8f5e9;
-      font-size: 0.9em;
-      margin-top: 5px;
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 40px;
-      font-size: 1.2em;
-      color: #e8f5e9;
-    }
-    
-    .error {
-      background-color: rgba(244, 67, 54, 0.2);
-      border: 2px solid #f44336;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 20px 0;
-      text-align: center;
-    }
-    
-    .table-container {
-      background-color: rgba(255,255,255,0.95);
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-      overflow-x: auto;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      color: #333;
-    }
-    
-    thead {
-      background-color: #3d5a2a;
-      color: white;
-    }
-    
-    th {
-      padding: 15px 10px;
-      text-align: left;
-      font-weight: 600;
-      border-bottom: 2px solid #547c38;
-    }
-    
-    td {
-      padding: 12px 10px;
-      border-bottom: 1px solid #ddd;
-    }
-    
-    tbody tr:hover {
-      background-color: #f5f5f5;
-    }
-    
-    tbody tr:nth-child(even) {
-      background-color: #fafafa;
-    }
-    
-    .confidence {
-      font-weight: bold;
-    }
-    
-    .confidence-high {
-      color: #4caf50;
-    }
-    
-    .confidence-medium {
-      color: #ff9800;
-    }
-    
-    .confidence-low {
-      color: #f44336;
-    }
-    
-    .scientific-name {
-      font-style: italic;
-      color: #666;
-      font-size: 0.9em;
-    }
-    
-    .top-predictions {
-      font-size: 0.85em;
-      color: #777;
-      margin-top: 5px;
-    }
-    
-    .no-data {
-      text-align: center;
-      padding: 40px;
-      color: #999;
-      font-size: 1.1em;
-    }
-    
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 2em;
-      }
-      
-      .table-container {
-        padding: 10px;
-      }
-      
-      th, td {
-        padding: 8px 5px;
-        font-size: 0.9em;
-      }
-      
-      .top-predictions {
-        display: none;
-      }
-    }
-  </style>
+  <link rel="icon" type="image/png" href="Robin_PCB.png">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
@@ -268,7 +90,7 @@
     // UTILITY FUNCTIONS
     // ============================================
     
-    function formatTimestamp(timestamp) {
+    function formatTimestamp(timestamp, timezone) {
       // Handle Firestore Timestamp object
       let date;
       if (timestamp && timestamp.toDate) {
@@ -279,21 +101,23 @@
         return "Unknown";
       }
       
-      // Format: "Nov 25, 2025 10:40 AM"
+      // Format with the timezone from the database
       const options = {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: timezone || 'America/New_York', // Use stored timezone or default to EST
+        timeZoneName: 'short' // Shows "EST", "EDT", etc.
       };
       return date.toLocaleString('en-US', options);
     }
     
     function getConfidenceClass(confidence) {
-      if (confidence >= 0.8) return 'confidence-high';
-      if (confidence >= 0.5) return 'confidence-medium';
-      return 'confidence-low';
+      if (confidence >= 0.90) return 'confidence-high'; // 90% - 100% = high (green)
+      if (confidence >= 0.70) return 'confidence-medium'; // 70% - 90% = medium (orange)
+      return 'confidence-low'; // 0% - 70% = low (red)
     }
     
     function showError(message) {
@@ -326,7 +150,7 @@
       if (diffMins < 60) return `${diffMins}m ago`;
       if (diffHours < 24) return `${diffHours}h ago`;
       if (diffDays < 7) return `${diffDays}d ago`;
-      return formatTimestamp(timestamp).split(',')[0]; // Just the date
+      return formatTimestamp(timestamp, 'America/New_York').split(',')[0]; // Just the date
     }
     
     // ============================================
@@ -364,9 +188,9 @@
         
         // Date & Time
         const dateCell = document.createElement('td');
-        dateCell.textContent = formatTimestamp(sighting.timestamp);
+        dateCell.textContent = formatTimestamp(sighting.timestamp, sighting.timezone);
         row.appendChild(dateCell);
-        
+
         // Bird Species (Common + Scientific)
         const speciesCell = document.createElement('td');
         speciesCell.innerHTML = `

@@ -10,6 +10,7 @@ import subprocess
 import time
 import os
 from datetime import datetime
+import pytz
 from pathlib import Path
 import warnings
 
@@ -78,6 +79,9 @@ CAPTURE_TIMEOUT = 2000 # milliseconds
 # Timing
 CHECK_INTERVAL = 0.5 # seconds between motion checks
 COOLDOWN_PERIOD = 2.0 # seconds to wait after a detection
+
+# Timezone for logging/database
+LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # EST/EDT
 
 # ============= SETUP =============
 def setup_directories():
