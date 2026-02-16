@@ -45,6 +45,8 @@ Production implementation using TensorFlow Lite for efficient on-device inferenc
 - `convert_to_tflite.py` - Model conversion utilities
 - `firebase_helper.py` - Manages Firestore client for live database reads/writes
 - `models/` - Stores TFLite model and label files
+- `images/` - Local copies of images taken by `bird_ID_tflite.py`
+- `venv/` - Virtual environment used for Python libraries and such
 
 ### `website/`
 All files for website hosting
@@ -52,7 +54,7 @@ All files for website hosting
 **Key files:**
 - `index.html` - HTML for the website, hosted on [https://students.cs.calvin.edu/~jt42/](https://students.cs.calvin.edu/~jt42/)
 - `styles.css` - A .css file for the main page
-- `Robin_PCB.png` - Bird_Nerd logo .png
+- `Robin_PCB.png` - Bird_Nerd logo image
 - `Robin_PCB_Favicon.png` - Favicon icon for website
 
 ### `toy_model/`
@@ -85,7 +87,7 @@ Initial prototype using Ollama's llava:7b vision model for bird identification. 
 ## Current Status
 ✅ Motion detection working  
 ✅ TFLite classification working  
-✅ Efficient operation on 1GB RAM (~280MB usage)  
+✅ Efficient operation on 1GB RAM Pi (~280MB usage)  
 ✅ Database storage  
 🚧 Website integration (in progress)  
 🚧 Outdoor deployment (coming soon)
