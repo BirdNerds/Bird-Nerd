@@ -17,24 +17,22 @@ Professor Derek C. Schuurman, current chair of the Calvin computer science depar
 Calvin University, Fall 2025 - Spring 2026
 
 ## Code
-The source code for our project can be found [here](https://github.com/BirdNerds/Bird-Nerd).
+The source code for our project can be found [on our GitHub](https://github.com/BirdNerds/Bird-Nerd).
 
 ## Deliverables
 
 ### Report
-The report for our project can be found [here](https://docs.google.com/document/d/1ejYF54ZocJHBa88cmade4xO01HcAqiNkbfw3FI-FXoc/edit?tab=t.aa46uj7emtqj).
+The report for our project can be found [in our Google Docs](https://docs.google.com/document/d/1ejYF54ZocJHBa88cmade4xO01HcAqiNkbfw3FI-FXoc/edit?tab=t.aa46uj7emtqj) documentation.
 
 ### Department of Computer Science website
-To learn more about Calvin University’s CS department, visit [this link](https://calvin.edu/academics/school-stem/computer-science).
+To learn more about our school's program, visit [Calvin University's CS department home page](https://calvin.edu/academics/school-stem/computer-science).
 
 ### Presentation
-To visit the presentation slides we gave for this assignment, visit [this link](https://docs.google.com/presentation/d/1DoOasrh5okXjUorbduDV5vdW57nHWcixiS5i9uhj74Q/edit?usp=sharing). 
+To visit the presentation slides we gave for this project, visit [our Google Slides](https://docs.google.com/presentation/d/1DoOasrh5okXjUorbduDV5vdW57nHWcixiS5i9uhj74Q/edit?usp=sharing). 
 
 ### Project Description
 
 Bird Nerd combines computer vision with IoT monitoring to automatically identify bird species visiting a backyard feeder. The system uses motion detection to trigger image capture, then classifies birds using Google's AIY Birds V1 TensorFlow Lite model (964 species). Designed for deployment on resource-constrained edge devices, our system runs on a Raspberry Pi 4 with only 1GB RAM.
-
-Future features include automatic social media posting, database storage of sightings, and notifications for low seed levels or unwanted visitors (squirrels).
 
 ## Repository Structure
 
@@ -45,12 +43,20 @@ Production implementation using TensorFlow Lite for efficient on-device inferenc
 - `bird_ID_tflite.py` - Main detection and classification system
 - `setup_bird_model.py` - Downloads and configures the Google AIY model
 - `convert_to_tflite.py` - Model conversion utilities
+- `firebase_helper.py` - Manages Firestore client for live database reads/writes
 - `models/` - Stores TFLite model and label files
-- `images/` - General motion-detected images
-- `unidentified/` - Images not sent to the GitHub/website automatically. Needs manual review
+
+### `website/`
+All files for website hosting
+
+**Key files:**
+- `index.html` - HTML for the website, hosted on [https://students.cs.calvin.edu/~jt42/](https://students.cs.calvin.edu/~jt42/)
+- `styles.css` - A .css file for the main page
+- `Robin_PCB.png` - Bird_Nerd logo .png
+- `Robin_PCB_Favicon.png` - Favicon icon for website
 
 ### `toy_model/`
-Initial prototype using Ollama's llava:7b vision model for bird identification. This was a proof-of-concept to test accuracy and validate the project approach. Too slow and resource-intensive for deployment on Raspberry Pi (30+ seconds per image), but useful for initial testing on more powerful hardware.
+Initial prototype using Ollama's llava:7b vision model for bird identification. This was a proof-of-concept to test accuracy and validate the project approach. Too slow and resource-intensive for deployment on Raspberry Pi (30+ seconds per image), but useful for initial testing on more powerful hardware. This is still in the Repo for fun.
 
 **Key files:**
 - `bird_nerd.py` - CLI tool for identifying birds from image files
@@ -58,27 +64,31 @@ Initial prototype using Ollama's llava:7b vision model for bird identification. 
 
 ## Quick Start
 
-*Documentation in progress - setup instructions coming soon*
+*Documentation in progress - setup instructions coming soon. There are rough steps to setting a virtual environment to run bird_ID_tflite.py on a Raspberry Pi in the Google Docs, under "To create virtual environment" section. This will be refined further in the future.*
 
 ## Hardware Requirements
 - Raspberry Pi 4 (1GB+ RAM)
 - Raspberry Pi Camera Module (we're using X000VGJ8BL)
 - MicroSD card (16GB+ recommended)
-- Bird feeder (installation planned)
+- A bird feeder. We bought [this bird feeder](https://www.tractorsupply.com/tsc/product/royal-wing-suet-combo-wooden-bird-feeder-with-galvanized-roof-2469759) from Tractor Supply Co. since it's relatively inexpensive 
 
 ## Software Requirements
 - Python 3.13
 - TensorFlow Lite Runtime
+- Pip
 - OpenCV
 - NumPy
+- Firebase-admin
+- dotenv
+- tzlocal
 
 ## Current Status
 ✅ Motion detection working  
 ✅ TFLite classification working  
 ✅ Efficient operation on 1GB RAM (~280MB usage)  
-🚧 Social media integration (in progress)  
-🚧 Database storage (in progress)  
-🚧 Outdoor deployment (planned)
+✅ Database storage  
+🚧 Website integration (in progress)  
+🚧 Outdoor deployment (coming soon)
 
 ## Acknowledgments
 Inspired by Mike Schultz's work on [TensorFlow Lite edge deployment](https://mikesml.com/2021/05/16/image-recognition-on-the-edge-tflite-on-raspberry-pi/)
