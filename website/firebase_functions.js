@@ -4,6 +4,7 @@
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js";
+import "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js";
 
 // ============================================
 // FIREBASE CONFIGURATION
@@ -90,6 +91,7 @@ function showLoginError(message) {
 async function handleLogin(username, password) {
     try {
         // Convert username to email format for Firebase Auth
+        // Admin username is <REDACTED> and password is <REDACTED>
         const email = `${username}@birdnerd.local`;
         await auth.signInWithEmailAndPassword(email, password);
         hideLoginModal();
@@ -125,8 +127,22 @@ async function deleteSighting(sightingId, birdName) {
 
     if (confirm(`Are you sure you want to delete this sighting?\n\n${birdName}\n\nThis action cannot be undone.`)) {
         try {
+            // Delete Firestore document
             await db.collection('sightings').doc(sightingId).delete();
-            console.log(`Deleted sighting: ${sightingId}`);
+            console.log(`Deleted Firestore doc: ${sightingId}`);
+
+            // Delete paired image from Firebase Storage (sightings/{docId}.jpg)
+            try {
+                const storagePath = `sightings/${sightingId}.jpg`;
+                const storageRef = firebase.storage().ref(storagePath);
+                await storageRef.delete();
+                console.log(`Deleted Storage image: ${storagePath}`);
+            } catch (storageErr) {
+                // Not fatal — image may not exist (older entries, upload failures)
+                if (storageErr.code !== 'storage/object-not-found') {
+                    console.warn("Storage image delete warning:", storageErr.message);
+                }
+            }
             // The onSnapshot listener will automatically update the UI
         } catch (error) {
             console.error("Error deleting sighting:", error);
@@ -178,12 +194,12 @@ function formatTimestamp(timestamp, timezone) {
 
     // Format with the timezone from the database
     const options = {
-        weekday: 'long', // Shows "Monday", "Tuesday", etc.
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+        weekday: 'long', // "Monday", "Tuesday", etc.
+        year: 'numeric', // "2026"
+        month: 'short', // "Jan", "Feb", etc.
+        day: 'numeric', // "1", "2", ..., "31"
+        hour: '2-digit', // "01", "02", ..., "12"
+        minute: '2-digit', // "00", "01", ..., "59"
         timeZone: timezone || 'America/New_York', // Use stored timezone or default to EST
         timeZoneName: 'short' // Shows "EST", "EDT", etc.
     };
@@ -250,9 +266,104 @@ function updateStatistics(sightings) {
     }
 }
 
+// ============================================
+// BIRD DETAIL MODAL
+// ============================================
+
+// Cache of all sightings for computing per-species stats
+let _allSightings = [];
+
+function openBirdModal(sighting) {
+    // ── Stats ──────────────────────────────────────────────────────
+    const scientificName = sighting.scientific_name;
+    const now = new Date();
+
+    const allTime  = _allSightings.filter(s => s.scientific_name === scientificName).length;
+    const last30   = _allSightings.filter(s => {
+        const d = s.timestamp && s.timestamp.toDate ? s.timestamp.toDate() : null;
+        return d && s.scientific_name === scientificName && (now - d) <= 30 * 86400000;
+    }).length;
+    const last7    = _allSightings.filter(s => {
+        const d = s.timestamp && s.timestamp.toDate ? s.timestamp.toDate() : null;
+        return d && s.scientific_name === scientificName && (now - d) <= 7 * 86400000;
+    }).length;
+
+    // ── Image ──────────────────────────────────────────────────────
+    const modalImg     = document.getElementById('bird-modal-img');
+    const noImgText    = document.getElementById('bird-modal-no-img');
+    if (sighting.image_url) {
+        modalImg.src = sighting.image_url;
+        modalImg.style.display = 'block';
+        noImgText.style.display = 'none';
+    } else {
+        modalImg.style.display = 'none';
+        noImgText.style.display = 'block';
+    }
+
+    // ── Text fields ────────────────────────────────────────────────
+    document.getElementById('bird-modal-common').textContent    = sighting.common_name;
+    document.getElementById('bird-modal-scientific').textContent = sighting.scientific_name;
+    document.getElementById('bird-modal-time').textContent       = formatTimestamp(sighting.timestamp, sighting.timezone);
+    document.getElementById('bird-modal-confidence').textContent = (sighting.confidence * 100).toFixed(1) + '%';
+    document.getElementById('bird-modal-confidence').className   = 'confidence ' + getConfidenceClass(sighting.confidence);
+
+    // ── Stats ──────────────────────────────────────────────────────
+    document.getElementById('bird-modal-alltime').textContent = allTime;
+    document.getElementById('bird-modal-30days').textContent  = last30;
+    document.getElementById('bird-modal-7days').textContent   = last7;
+
+    // ── Top 3 Predictions ──────────────────────────────────────────
+    const predList = document.getElementById('bird-modal-predictions');
+    predList.innerHTML = '';
+    if (sighting.top_3_predictions && sighting.top_3_predictions.length > 0) {
+        sighting.top_3_predictions.forEach((pred, idx) => {
+            const li = document.createElement('li');
+            li.textContent = `${idx + 1}. ${pred.label} (${(pred.confidence * 100).toFixed(1)}%)`;
+            predList.appendChild(li);
+        });
+    } else {
+        predList.innerHTML = '<li>No predictions available</li>';
+    }
+
+    // ── eBird link ─────────────────────────────────────────────────
+    const ebirdLink = document.getElementById('bird-modal-ebird');
+    ebirdLink.href = 'https://ebird.org/home';
+    ebirdLink.textContent = `Learn more about ${sighting.common_name} on eBird`;
+
+    // Show modal
+    document.getElementById('bird-modal').style.display = 'flex';
+}
+
+function closeBirdModal() {
+    document.getElementById('bird-modal').style.display = 'none';
+    // Clear image src to stop loading if user closes quickly
+    document.getElementById('bird-modal-img').src = '';
+}
+
+// Close on backdrop click
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('bird-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'bird-modal') closeBirdModal();
+    });
+});
+
+// Close with Escape key (alongside the login modal handler)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('bird-modal').style.display === 'flex') {
+        closeBirdModal();
+    }
+});
+
+// ============================================
+// TABLE RENDERING
+// ============================================
+
+// ── Image preview height — adjust this one constant to resize all previews ──
+const IMAGE_PREVIEW_HEIGHT_PX = 200;
+
 function renderSightings(sightings) {
     const tbody = document.getElementById('sightings-body');
-    tbody.innerHTML = ''; // Clear existing rows
+    tbody.innerHTML = '';
 
     if (sightings.length === 0) {
         const colspan = isAdmin ? 5 : 4;
@@ -262,14 +373,19 @@ function renderSightings(sightings) {
 
     sightings.forEach(sighting => {
         const row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        row.title = 'Click to view details';
+        row.addEventListener('click', (e) => {
+            // Don't open modal when clicking the delete button
+            if (e.target.classList.contains('delete-btn')) return;
+            openBirdModal(sighting);
+        });
 
         // Date & Time
         const dateCell = document.createElement('td');
         const fullTimestamp = formatTimestamp(sighting.timestamp, sighting.timezone);
-        // Split at the time (last comma) to put time on new line
         const parts = fullTimestamp.split(', ');
         if (parts.length >= 3) {
-            // Rejoin date parts, then add time on new line
             const datePart = parts.slice(0, -1).join(', ');
             const timePart = parts[parts.length - 1];
             dateCell.innerHTML = `${datePart}<br>${timePart}`;
@@ -292,26 +408,36 @@ function renderSightings(sightings) {
         confidenceCell.innerHTML = `<span class="confidence ${getConfidenceClass(sighting.confidence)}">${confidencePercent}%</span>`;
         row.appendChild(confidenceCell);
 
-        // Top 3 Predictions
-        const predictionsCell = document.createElement('td');
-        if (sighting.top_3_predictions && sighting.top_3_predictions.length > 0) {
-            const predictionsList = sighting.top_3_predictions
-                .map((pred, idx) => `${idx + 1}. ${pred.label} (${(pred.confidence * 100).toFixed(1)}%)`)
-                .join('<br>');
-            predictionsCell.innerHTML = `<div class="top-predictions">${predictionsList}</div>`;
+        // Image Preview (replaces Predictions column)
+        const imageCell = document.createElement('td');
+        imageCell.className = 'image-preview-cell';
+        if (sighting.image_url) {
+            const img = document.createElement('img');
+            img.src = sighting.image_url;
+            img.alt = sighting.common_name;
+            img.className = 'sighting-thumbnail';
+            img.style.height = IMAGE_PREVIEW_HEIGHT_PX + 'px';
+            img.loading = 'lazy';
+            imageCell.appendChild(img);
         } else {
-            predictionsCell.textContent = '-';
+            const noImg = document.createElement('span');
+            noImg.className = 'no-image-text';
+            noImg.textContent = 'No image available :(';
+            imageCell.appendChild(noImg);
         }
-        row.appendChild(predictionsCell);
+        row.appendChild(imageCell);
 
-        // Admin Actions (only show if logged in as admin)
+        // Admin Actions
         if (isAdmin) {
             const actionsCell = document.createElement('td');
             actionsCell.className = 'actions-cell';
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-btn';
             deleteBtn.textContent = 'Delete';
-            deleteBtn.onclick = () => deleteSighting(sighting.id, sighting.common_name);
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation(); // prevent row click / modal open
+                deleteSighting(sighting.id, sighting.common_name);
+            };
             actionsCell.appendChild(deleteBtn);
             row.appendChild(actionsCell);
         }
@@ -336,6 +462,9 @@ function loadSightings() {
             });
 
             console.log(`Loaded ${sightings.length} sightings`);
+
+            // Cache sightings for per-species stats in the modal
+            _allSightings = sightings;
 
             // Update UI
             document.getElementById('loading').style.display = 'none';

@@ -312,14 +312,15 @@ def save_classified_image(frame, label, confidence, top_3):
     scientific_name = label  # Modify if your labels have a different format
     log_detection(label, scientific_name, confidence, top_3)
     
-    # Log to Firebase if enabled
+    # Log to Firebase if enabled (pass filepath so the image is uploaded too)
     if FIREBASE_ENABLED:
         try:
             firebase_helper.add_bird_sighting(
                 common_name=label,
                 scientific_name=scientific_name,
                 confidence=confidence,
-                top_3_predictions=top_3
+                top_3_predictions=top_3,
+                image_path=filepath
             )
         except Exception as e:
             print(f"Warning: Failed to log to Firebase: {e}")
