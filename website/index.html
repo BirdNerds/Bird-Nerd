@@ -57,7 +57,7 @@
             <th>Date & Time</th>
             <th>Bird Species</th>
             <th>Confidence</th>
-            <th>Predictions</th>
+            <th>Image</th>
             <th class="actions-header" id="actions-column-header">Actions</th>
           </tr>
         </thead>
@@ -87,6 +87,58 @@
           <button type="button" id="cancel-login" class="btn btn-secondary">Cancel</button>
         </div>
       </form>
+    </div>
+  </div>
+
+
+  <!-- Bird Detail Modal -->
+  <div id="bird-modal" class="modal" style="display: none;">
+    <div class="modal-content bird-modal-content">
+      <button class="bird-modal-close" onclick="closeBirdModal()" aria-label="Close">&times;</button>
+
+      <!-- Image -->
+      <div class="bird-modal-image-wrap">
+        <img id="bird-modal-img" src="" alt="Bird sighting" class="bird-modal-img" />
+        <p id="bird-modal-no-img" class="bird-modal-no-img" style="display:none;">No image available :(</p>
+      </div>
+
+      <!-- Name & time -->
+      <h2 id="bird-modal-common" class="bird-modal-common"></h2>
+      <p id="bird-modal-scientific" class="bird-modal-scientific"></p>
+      <p class="bird-modal-meta">
+        Spotted: <strong id="bird-modal-time"></strong>
+        &nbsp;|&nbsp;
+        Confidence: <strong id="bird-modal-confidence"></strong>
+      </p>
+
+      <!-- Stats -->
+      <div class="bird-modal-stats">
+        <div class="bird-stat-box">
+          <div class="bird-stat-num" id="bird-modal-alltime"></div>
+          <div class="bird-stat-label">All-time sightings</div>
+        </div>
+        <div class="bird-stat-box">
+          <div class="bird-stat-num" id="bird-modal-30days"></div>
+          <div class="bird-stat-label">Last 30 days</div>
+        </div>
+        <div class="bird-stat-box">
+          <div class="bird-stat-num" id="bird-modal-7days"></div>
+          <div class="bird-stat-label">Last 7 days</div>
+        </div>
+      </div>
+
+      <!-- Top 3 predictions -->
+      <div class="bird-modal-predictions-wrap">
+        <h3>Top 3 Predictions</h3>
+        <ul id="bird-modal-predictions"></ul>
+      </div>
+
+      <!-- eBird link -->
+      <p class="bird-modal-ebird-wrap">
+        <a id="bird-modal-ebird" href="https://ebird.org/home" target="_blank" rel="noopener">
+          Learn more on eBird &rarr;
+        </a>
+      </p>
     </div>
   </div>
 

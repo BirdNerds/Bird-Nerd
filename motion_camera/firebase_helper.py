@@ -6,6 +6,7 @@ Handles uploading bird sightings to Firestore database
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from firebase_admin import storage
 from datetime import datetime
 import os
 from dotenv import load_dotenv
@@ -17,6 +18,9 @@ load_dotenv()
 # Get credentials path from environment variable, with fallback
 SERVICE_ACCOUNT_KEY = os.getenv('FIREBASE_CREDENTIALS_PATH', 
                                  '/home/tocila/Documents/Bird-Nerd/motion_camera/.credentials/bird-nerd-firebase-adminsdk.json')
+
+# Firebase Storage bucket name (from your Firebase console — projectId.appspot.com)
+STORAGE_BUCKET = os.getenv('FIREBASE_STORAGE_BUCKET', 'bird-nerd-27eb1.firebasestorage.app')
 
 # Initialize Firebase (only once)
 _firebase_initialized = False
@@ -39,10 +43,12 @@ def initialize_firebase():
         
         # Initialize the app with service account
         cred = credentials.Certificate(SERVICE_ACCOUNT_KEY)
-        firebase_admin.initialize_app(cred)
+        firebase_admin.initialize_app(cred, {
+            'storageBucket': STORAGE_BUCKET
+        })
         
         _firebase_initialized = True
-        print(f"✓ Firebase initialized successfully")
+        print(f"Firebase initialized successfully")
         print(f"  Using credentials: {SERVICE_ACCOUNT_KEY}")
         return True
         
@@ -50,9 +56,9 @@ def initialize_firebase():
         print(f"Error initializing Firebase: {e}")
         return False
 
-def add_bird_sighting(common_name, scientific_name, confidence, top_3_predictions, timestamp=None, timezone=None):
+def add_bird_sighting(common_name, scientific_name, confidence, top_3_predictions, timestamp=None, timezone=None, image_path=None):
     """
-    Add a bird sighting to Firestore
+    Add a bird sighting to Firestore and optionally upload its image to Firebase Storage.
     
     Args:
         common_name (str): Common name of the bird (e.g., "Northern Cardinal")
@@ -61,6 +67,7 @@ def add_bird_sighting(common_name, scientific_name, confidence, top_3_prediction
         top_3_predictions (list): List of tuples [(label, confidence), ...]
         timestamp (datetime, optional): Timestamp of sighting. Defaults to now.
         timezone (str, optional): Timezone string (e.g., "America/New_York"). Defaults to system timezone.
+        image_path (str, optional): Local path to the image file to upload to Firebase Storage.
     
     Returns:
         str: Document ID if successful, None if failed
@@ -115,30 +122,103 @@ def add_bird_sighting(common_name, scientific_name, confidence, top_3_prediction
             for label, conf in top_3_predictions
         ]
         
-        # Create document data
+        # Create document data (image_url filled in after upload below)
         sighting_data = {
             'timestamp': timestamp,
-            'timezone': timezone,  # NEW: Store timezone
+            'timezone': timezone,
             'common_name': common_name,
             'scientific_name': scientific_name,
             'confidence': float(confidence),
             'top_3_predictions': top_3_formatted,
-            # We'll add image_url later when we implement image storage
             'image_url': None
         }
         
-        # Add to Firestore collection
+        # Add to Firestore first so we have the document ID
         doc_ref = db.collection('sightings').add(sighting_data)
         
         # doc_ref is a tuple: (timestamp, DocumentReference)
         doc_id = doc_ref[1].id
         
-        print(f"✓ Logged to Firebase: {common_name} ({confidence:.2%}) [ID: {doc_id[:8]}...] [{timezone}]")
+        print(f"Logged to Firebase: {common_name} ({confidence:.2%}) [ID: {doc_id[:8]}...] [{timezone}]")
+        
+        # -- Image upload ------------------------------------------------
+        if image_path:
+            image_url = upload_sighting_image(image_path, doc_id)
+            if image_url:
+                # Update the document with the public image URL
+                doc_ref[1].update({'image_url': image_url})
+                print(f"Image uploaded: sightings/{doc_id}.jpg")
+            else:
+                _log_image_warning(common_name, doc_id, image_path)
+        
         return doc_id
         
     except Exception as e:
         print(f"Error adding bird sighting to Firebase: {e}")
         return None
+
+
+def upload_sighting_image(image_path, doc_id):
+    """
+    Upload a local image file to Firebase Storage under sightings/{doc_id}.jpg
+    Returns the public download URL on success, or None on failure.
+
+    Args:
+        image_path (str): Local path to the image file.
+        doc_id (str): Firestore document ID used as the storage filename.
+
+    Returns:
+        str: Public download URL, or None if upload failed.
+    """
+    try:
+        bucket = storage.bucket()
+        blob_path = f"sightings/{doc_id}.jpg"
+        blob = bucket.blob(blob_path)
+        
+        # Upload the file; JPEG content type is safe for both IMAGES_DIR and UNCLEAR_DIR
+        blob.upload_from_filename(image_path, content_type='image/jpeg')
+        
+        # Make the file publicly readable so the browser can load it directly
+        blob.make_public()
+        
+        return blob.public_url
+    
+    except Exception as e:
+        print(f"Warning: Image upload failed for doc {doc_id}: {e}")
+        return None
+
+
+def _log_image_warning(common_name, doc_id, image_path):
+    """
+    Append a warning to sightings.log when an image upload fails.
+    Matches the log format used by log_detection() in bird_ID_tflite.py.
+
+    Args:
+        common_name (str): Bird common name for context.
+        doc_id (str): Firestore document ID of the affected sighting.
+        image_path (str): Local path that failed to upload.
+    """
+    import time as _time
+    from pathlib import Path as _Path
+    
+    # Best-effort: find the log file relative to this module, same as bird_ID_tflite.py
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    log_file = os.path.join(script_dir, "sightings.log")
+    
+    warning_line = (
+        f"[IMAGE UPLOAD WARNING] {_time.strftime('%Y-%m-%d %H:%M:%S')} "
+        f"Failed to upload image for '{common_name}' (doc: {doc_id}). "
+        f"Local path: {image_path}\n"
+    )
+    try:
+        with open(log_file, 'a') as f:
+            f.write(warning_line)
+    except Exception as log_err:
+        print(f"  Also failed to write warning to log: {log_err}")
+    
+    print(f"Warning: Image upload failed for '{common_name}' [doc: {doc_id[:8]}...] "
+          f"- 'No image available' will be shown in the dashboard.")
+
 
 def get_recent_sightings(limit=10):
     """
@@ -181,7 +261,7 @@ if __name__ == "__main__":
     
     # Initialize
     if initialize_firebase():
-        print("\n✓ Firebase initialized successfully!")
+        print("\nFirebase initialized successfully!")
         
         # Test adding a sighting
         print("\nAdding test sighting...")
@@ -191,15 +271,24 @@ if __name__ == "__main__":
             ("Sialia sialis (Eastern Bluebird)", 0.0005)
         ]
         
+        # Use the placeholder image bundled in this directory for test runs
+        _placeholder_img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fake_bird_image.png")
+        _test_image = _placeholder_img if os.path.exists(_placeholder_img) else None
+        if _test_image:
+            print(f"  Using placeholder image: {_placeholder_img}")
+        else:
+            print(f"  Warning: fake_bird_image.png not found at {_placeholder_img} - uploading without image")
+
         doc_id = add_bird_sighting(
             common_name="Northern Cardinal",
             scientific_name="Cardinalis cardinalis",
             confidence=0.9987,
-            top_3_predictions=test_top_3
+            top_3_predictions=test_top_3,
+            image_path=_test_image
         )
         
         if doc_id:
-            print(f"\n✓ Test sighting added successfully!")
+            print(f"\nTest sighting added successfully!")
             print(f"  Document ID: {doc_id}")
             
             # Retrieve recent sightings
@@ -217,12 +306,12 @@ if __name__ == "__main__":
                 print()
             
             print("=" * 60)
-            print("✓ All tests passed! Firebase is working correctly.")
+            print("All tests passed! Firebase is working correctly.")
             print("=" * 60)
         else:
-            print("\n✗ Failed to add test sighting")
+            print("\nFailed to add test sighting")
     else:
-        print("\n✗ Firebase initialization failed")
+        print("\nFirebase initialization failed")
         print("\n" + "=" * 60)
         print("Troubleshooting Checklist:")
         print("=" * 60)

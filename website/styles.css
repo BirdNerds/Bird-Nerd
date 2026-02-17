@@ -343,3 +343,209 @@ tbody tr:nth-child(even) {
     display: none;
     }
 }
+/* ============================================================
+   IMAGE PREVIEW (table column)
+   ============================================================ */
+.image-preview-cell {
+    padding: 8px 10px;
+    vertical-align: middle;
+    text-align: center;
+    /* Column min-width keeps the table tidy even with no image */
+    min-width: 140px;
+}
+
+.sighting-thumbnail {
+    /* Height is set inline from IMAGE_PREVIEW_HEIGHT_PX constant in JS.
+       Width scales automatically — aspect ratio is preserved.
+       Change the constant in firebase_functions.js to resize all previews. */
+    width: auto;
+    max-width: 280px;
+    display: block;
+    margin: 0 auto;
+    border-radius: 6px;
+    object-fit: cover;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sighting-thumbnail:hover {
+    transform: scale(1.04);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+}
+
+.no-image-text {
+    color: #aaa;
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+/* ============================================================
+   BIRD DETAIL MODAL
+   ============================================================ */
+.bird-modal-content {
+    /* Overrides the login modal width */
+    max-width: 600px;
+    width: 94%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 0;
+    border-radius: 12px;
+    position: relative;
+}
+
+.bird-modal-close {
+    position: sticky;
+    top: 10px;
+    float: right;
+    margin: 10px 10px 0 0;
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    line-height: 1;
+    color: #666;
+    cursor: pointer;
+    z-index: 10;
+    padding: 0 6px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.bird-modal-close:hover {
+    background: rgba(0,0,0,0.08);
+    color: #333;
+}
+
+/* Bird image */
+.bird-modal-image-wrap {
+    width: 100%;
+    background: #1a1a1a;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bird-modal-img {
+    width: 100%;
+    max-height: 340px;
+    object-fit: contain;
+    display: block;
+}
+
+.bird-modal-no-img {
+    color: #888;
+    font-style: italic;
+    padding: 40px 20px;
+    text-align: center;
+    font-size: 1em;
+}
+
+/* Text */
+.bird-modal-common {
+    color: #3d5a2a;
+    margin: 18px 22px 4px;
+    font-size: 1.7em;
+}
+
+.bird-modal-scientific {
+    font-style: italic;
+    color: #666;
+    margin: 0 22px 10px;
+    font-size: 1em;
+}
+
+.bird-modal-meta {
+    margin: 0 22px 16px;
+    font-size: 0.92em;
+    color: #444;
+}
+
+/* Stats strip */
+.bird-modal-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin: 0 0 18px;
+}
+
+.bird-stat-box {
+    padding: 14px 10px;
+    text-align: center;
+    border-right: 1px solid #eee;
+}
+
+.bird-stat-box:last-child {
+    border-right: none;
+}
+
+.bird-stat-num {
+    font-size: 1.9em;
+    font-weight: bold;
+    color: #547c38;
+}
+
+.bird-stat-label {
+    font-size: 0.78em;
+    color: #888;
+    margin-top: 3px;
+}
+
+/* Predictions */
+.bird-modal-predictions-wrap {
+    margin: 0 22px 16px;
+}
+
+.bird-modal-predictions-wrap h3 {
+    font-size: 1em;
+    color: #3d5a2a;
+    margin-bottom: 8px;
+}
+
+.bird-modal-predictions-wrap ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.bird-modal-predictions-wrap ul li {
+    font-size: 0.88em;
+    color: #555;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.bird-modal-predictions-wrap ul li:last-child {
+    border-bottom: none;
+}
+
+/* eBird link */
+.bird-modal-ebird-wrap {
+    margin: 0 22px 22px;
+    text-align: center;
+}
+
+.bird-modal-ebird-wrap a {
+    display: inline-block;
+    color: #547c38;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.95em;
+    padding: 8px 16px;
+    border: 2px solid #547c38;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.bird-modal-ebird-wrap a:hover {
+    background: #547c38;
+    color: white;
+}
+
+/* Make table rows show a hover highlight when clickable */
+#sightings-table tbody tr:hover {
+    background-color: #edf5e8 !important;
+}
