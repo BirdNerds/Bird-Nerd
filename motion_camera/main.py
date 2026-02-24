@@ -41,22 +41,17 @@ except ImportError:
     import tensorflow as tf
 
 # ============= CONFIGURATION =============
-# Directories
-MOTION_DIR = "/home/tocila/Documents/Motion_Camera/images"
-CLASSIFIED_DIR = "/home/tocila/Documents/Motion_Camera/classified"
-UNKNOWN_DIR = "/home/tocila/Documents/Motion_Camera/unknown"
-
 # Directories - ALL relative to script location
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 IMAGES_DIR = os.path.join(SCRIPT_DIR, "images")
 UNCLEAR_DIR = os.path.join(SCRIPT_DIR, "unclear_images")
-TEMP_DIR = "/tmp/bird_feeder"
+TEMP_DIR = "/tmp/bird_feeder" # Used for temporary captures; not critical to keep long-term
 LOG_FILE = os.path.join(SCRIPT_DIR, "sightings.log")
 
 # Model Settings
 MODEL_PATH = os.path.join(SCRIPT_DIR, "models", "bird_classifier.tflite")
 LABELS_PATH = os.path.join(SCRIPT_DIR, "models", "labels.txt")
-CONFIDENCE_THRESHOLD = 0.6  # Minimum confidence to save to /images/
+CONFIDENCE_THRESHOLD = 0.6  # Minimum confidence to save to /images/ any lower goes to /unclear/
 
 # Motion Detection Settings
 MOTION_THRESHOLD = 40
@@ -78,7 +73,9 @@ CAPTURE_TIMEOUT = 2000 # milliseconds
 
 # Timing
 CHECK_INTERVAL = 0.5 # seconds between motion checks
-COOLDOWN_PERIOD = 2.0 # seconds to wait after a detection
+COOLDOWN_PERIOD = 10.0 # seconds to wait after a detection
+# Real world: COOLDOWN_PERIOD = 30 seconds
+# Testing: COOLDOWN_PERIOD = 10 seconds
 
 # Timezone for logging/database
 LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # EST/EDT
@@ -329,25 +326,21 @@ def save_classified_image(frame, label, confidence, top_3):
 
 def main():
     """Main detection loop"""
-    print("=" * 60)
-    print("Bird Detection with TensorFlow Lite")
-    print("=" * 60)
+    print("Welcome to Bird Nerd, the AI bird classifier for your backyard!")
     
-    # Setup
     setup_directories()
     
     print(f"Images directory: {IMAGES_DIR}")
-    print(f"Unclear directory: {UNCLEAR_DIR}")
+    # print(f"Unclear directory: {UNCLEAR_DIR}")
     print(f"Log file: {LOG_FILE}")
     print(f"Pre-classify thresholds: lap_var >= {LAP_VAR_THRESHOLD}, aspect_ratio in {ASPECT_RATIO_RANGE}")
     
     # Check if model exists
     if not os.path.exists(MODEL_PATH):
-        print(f"\nError: Model not found at {MODEL_PATH}")
-        print("\nTo get started, you need a TFLite model. Options:")
-        print("1. Train your own using the fast.ai notebook in the repo")
-        print("2. Download a pre-trained bird classifier")
-        print("3. Use Google's Teachable Machine: https://teachablemachine.withgoogle.com/")
+        print(f"\ERROR: Model not found at {MODEL_PATH}")
+        print("\nTo get started, you need a TFLite model")
+        print("Bird Nerd devs has used this Google AIY model in the past")
+        print("https://aiyprojects.withgoogle.com/model/nature-explorer/")
         print("\nFor now, running in motion-only mode...\n")
         classifier = None
     else:
@@ -358,9 +351,8 @@ def main():
             print("Running in motion-only mode...\n")
             classifier = None
     
-    print(f"Confidence threshold: {CONFIDENCE_THRESHOLD}")
-    print("=" * 60)
-    print("Starting... Press Ctrl+C to stop\n")
+    print(f"Confidence threshold: {CONFIDENCE_THRESHOLD} any lower goes to {UNCLEAR_DIR}")
+    print("\nStarting... Press Ctrl+C to stop\n")
     
     # Temporary image paths
     temp_img1 = os.path.join(TEMP_DIR, "temp1.jpg")
@@ -400,6 +392,7 @@ def main():
             
             if motion_detected:
                 now_str = datetime.now().strftime("%H:%M:%S")
+                # print(f"{now_str}  Motion detected! Area: {area}px")
                 print(f"{now_str}  Motion detected! Area: {area}px")
                 
                 # Classify if model available
@@ -476,6 +469,7 @@ def main():
         print("Detection stopped")
         print(f"Total checks: {check_count}")
         print(f"Detections: {detection_count}")
+        print(f"Program ran for {(check_count * CHECK_INTERVAL) / 60:.1f} minutes")
         print("=" * 60)
     
     except Exception as e:
