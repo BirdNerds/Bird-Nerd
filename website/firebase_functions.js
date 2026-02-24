@@ -63,6 +63,10 @@ function showAdminStatus() {
     document.getElementById('admin-login-btn').style.display = 'none';
     document.getElementById('admin-status').style.display = 'flex';
     document.getElementById('actions-column-header').style.display = 'table-cell';
+    if (currentUser) {
+        const username = currentUser.email.split('@')[0];
+        document.getElementById('admin-username').textContent = `Logged in as ${username}`;
+    }
 }
 
 function hideAdminStatus() {
@@ -212,6 +216,31 @@ function getConfidenceClass(confidence) {
     return 'confidence-low'; // 0% - 70% = low (red)
 }
 
+function formatConfidence(confidence) {
+    // Floor to 2 decimal places and cap at 99.99%
+    let percent = Math.floor(confidence * 100 * 100) / 100;
+    return Math.min(percent, 99.99);
+}
+
+function formatTopPredictions(predictions) {
+    if (!predictions || predictions.length === 0) return predictions;
+    
+    // Format each prediction with flooring and capping
+    let formatted = predictions.map(pred => ({
+        ...pred,
+        confidence: formatConfidence(pred.confidence)
+    }));
+    
+    // If the top prediction is 99.99%, ensure the next two are at least 0.01%
+    if (formatted[0].confidence === 99.99) {
+        for (let i = 1; i < Math.min(3, formatted.length); i++) {
+            formatted[i].confidence = Math.max(formatted[i].confidence, 0.01);
+        }
+    }
+    
+    return formatted;
+}
+
 function showError(message) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error').style.display = 'block';
@@ -304,7 +333,7 @@ function openBirdModal(sighting) {
     document.getElementById('bird-modal-common').textContent    = sighting.common_name;
     document.getElementById('bird-modal-scientific').textContent = sighting.scientific_name;
     document.getElementById('bird-modal-time').textContent       = formatTimestamp(sighting.timestamp, sighting.timezone);
-    document.getElementById('bird-modal-confidence').textContent = (sighting.confidence * 100).toFixed(1) + '%';
+    document.getElementById('bird-modal-confidence').textContent = formatConfidence(sighting.confidence) + '%';
     document.getElementById('bird-modal-confidence').className   = 'confidence ' + getConfidenceClass(sighting.confidence);
 
     // ── Stats ──────────────────────────────────────────────────────
@@ -315,10 +344,11 @@ function openBirdModal(sighting) {
     // ── Top 3 Predictions ──────────────────────────────────────────
     const predList = document.getElementById('bird-modal-predictions');
     predList.innerHTML = '';
-    if (sighting.top_3_predictions && sighting.top_3_predictions.length > 0) {
-        sighting.top_3_predictions.forEach((pred, idx) => {
+    const formattedPredictions = formatTopPredictions(sighting.top_3_predictions);
+    if (formattedPredictions && formattedPredictions.length > 0) {
+        formattedPredictions.forEach((pred, idx) => {
             const li = document.createElement('li');
-            li.textContent = `${idx + 1}. ${pred.label} (${(pred.confidence * 100).toFixed(1)}%)`;
+            li.textContent = `${idx + 1}. ${pred.label} (${pred.confidence}%)`;
             predList.appendChild(li);
         });
     } else {
@@ -345,6 +375,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bird-modal').addEventListener('click', (e) => {
         if (e.target.id === 'bird-modal') closeBirdModal();
     });
+
+    // Add event listener for the close button
+    document.querySelector('.bird-modal-close').addEventListener('click', closeBirdModal);
 });
 
 // Close with Escape key (alongside the login modal handler)
@@ -404,10 +437,10 @@ function renderSightings(sightings) {
 
         // Confidence
         const confidenceCell = document.createElement('td');
-        const confidencePercent = (sighting.confidence * 100).toFixed(1);
+        const confidencePercent = formatConfidence(sighting.confidence);
         confidenceCell.innerHTML = `<span class="confidence ${getConfidenceClass(sighting.confidence)}">${confidencePercent}%</span>`;
         row.appendChild(confidenceCell);
-
+        
         // Image Preview (replaces Predictions column)
         const imageCell = document.createElement('td');
         imageCell.className = 'image-preview-cell';
