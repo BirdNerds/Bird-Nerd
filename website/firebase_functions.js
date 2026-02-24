@@ -63,6 +63,10 @@ function showAdminStatus() {
     document.getElementById('admin-login-btn').style.display = 'none';
     document.getElementById('admin-status').style.display = 'flex';
     document.getElementById('actions-column-header').style.display = 'table-cell';
+    if (currentUser) {
+        const username = currentUser.email.split('@')[0];
+        document.getElementById('admin-username').textContent = `Logged in as ${username}`;
+    }
 }
 
 function hideAdminStatus() {
