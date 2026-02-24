@@ -1,3 +1,8 @@
+<!-- 
+  python3 -m http.server 8080 
+  to run a local server and view the website at http://localhost:8080/website
+  -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,9 +18,9 @@
   <div class="container">
     <!-- Admin Controls -->
     <div class="admin-controls">
-      <button id="admin-login-btn" class="admin-btn">Log in as admin</button>
+      <button id="admin-login-btn" class="admin-btn">Log in</button>
       <div id="admin-status" class="admin-status" style="display: none;">
-        <span id="admin-username">Logged in as admin</span>
+        <span id="admin-username">Logged in as &lt;username&gt;</span>
         <button id="admin-logout-btn" class="admin-btn">Logout</button>
       </div>
     </div>
@@ -71,7 +76,7 @@
   <!-- Login Modal -->
   <div id="login-modal" class="modal" style="display: none;">
     <div class="modal-content">
-      <h2>Admin Login</h2>
+      <h2>Login</h2>
       <form id="login-form">
         <div class="form-group">
           <label for="username">Username</label>
@@ -134,6 +139,7 @@
       </div>
 
       <!-- eBird link -->
+       <!-- TODO: Add links to bird specific website -->
       <p class="bird-modal-ebird-wrap">
         <a id="bird-modal-ebird" href="https://ebird.org/home" target="_blank" rel="noopener">
           Learn more on eBird &rarr;
