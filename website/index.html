@@ -56,6 +56,7 @@
     </div>
 
     <div id="table-container" class="table-container" style="display: none;">
+      <div id="pagination-top"></div>
       <table id="sightings-table">
         <thead>
           <tr>
@@ -67,9 +68,10 @@
           </tr>
         </thead>
         <tbody id="sightings-body">
-          <!-- Rows will be inserted here by JavaScript -->
+          <!-- This is where the giant bird entry table goes -->
         </tbody>
       </table>
+      <div id="pagination-bottom"></div>
     </div>
   </div>
 
@@ -139,7 +141,7 @@
       </div>
 
       <!-- eBird link -->
-       <!-- TODO: Add links to bird specific website -->
+      <!-- TODO: Add links to bird specific website -->
       <p class="bird-modal-ebird-wrap">
         <a id="bird-modal-ebird" href="https://ebird.org/home" target="_blank" rel="noopener">
           Learn more on eBird &rarr;
