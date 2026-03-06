@@ -54,6 +54,7 @@ All files for website hosting
 **Key files:**
 - `index.html` - HTML for the website, hosted on [https://students.cs.calvin.edu/~jt42/](https://students.cs.calvin.edu/~jt42/)
 - `styles.css` - A .css file for the main page
+- `firebase_functions.js` - A public javascript file that contains helper functions for the main website
 - `Robin_PCB.png` - Bird_Nerd logo image
 - `Robin_PCB_Favicon.png` - Favicon icon for website
 
@@ -70,7 +71,7 @@ Initial prototype using Ollama's llava:7b vision model for bird identification. 
 
 ## Hardware Requirements
 - Raspberry Pi 4 (1GB+ RAM)
-- Raspberry Pi Camera Module (we're using X000VGJ8BL)
+- Raspberry Pi Camera Module (we're using [X000VGJ8BL model B0033](https://www.uctronics.com/5mp-mini-camera-ov5647-sensor-1080p-720p-video-for-raspberry-pi-official-board.html)
 - MicroSD card (16GB+ recommended)
 - A bird feeder. We bought [this bird feeder](https://www.tractorsupply.com/tsc/product/royal-wing-suet-combo-wooden-bird-feeder-with-galvanized-roof-2469759) from Tractor Supply Co. since it's relatively inexpensive 
 
