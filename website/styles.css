@@ -327,22 +327,23 @@ tbody tr:nth-child(even) {
 
 @media (max-width: 768px) {
     h1 {
-    font-size: 2em;
+        font-size: 2em;
     }
-    
+
     .table-container {
-    padding: 10px;
+        padding: 10px;
     }
-    
+
     th, td {
-    padding: 8px 5px;
-    font-size: 0.9em;
+        padding: 8px 5px;
+        font-size: 0.9em;
     }
-    
+
     .top-predictions {
-    display: none;
+        display: none;
     }
 }
+
 /* ============================================================
    IMAGE PREVIEW (table column)
    ============================================================ */
@@ -350,14 +351,10 @@ tbody tr:nth-child(even) {
     padding: 8px 10px;
     vertical-align: middle;
     text-align: center;
-    /* Column min-width keeps the table tidy even with no image */
     min-width: 140px;
 }
 
 .sighting-thumbnail {
-    /* Height is set inline from IMAGE_PREVIEW_HEIGHT_PX constant in JS.
-       Width scales automatically — aspect ratio is preserved.
-       Change the constant in firebase_functions.js to resize all previews. */
     width: auto;
     max-width: 280px;
     display: block;
@@ -383,7 +380,6 @@ tbody tr:nth-child(even) {
    BIRD DETAIL MODAL
    ============================================================ */
 .bird-modal-content {
-    /* Overrides the login modal width */
     max-width: 600px;
     width: 94%;
     max-height: 90vh;
@@ -415,7 +411,6 @@ tbody tr:nth-child(even) {
     color: #333;
 }
 
-/* Bird image */
 .bird-modal-image-wrap {
     width: 100%;
     background: #1a1a1a;
@@ -442,7 +437,6 @@ tbody tr:nth-child(even) {
     font-size: 1em;
 }
 
-/* Text */
 .bird-modal-common {
     color: #3d5a2a;
     margin: 18px 22px 4px;
@@ -462,7 +456,6 @@ tbody tr:nth-child(even) {
     color: #444;
 }
 
-/* Stats strip */
 .bird-modal-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -494,7 +487,6 @@ tbody tr:nth-child(even) {
     margin-top: 3px;
 }
 
-/* Predictions */
 .bird-modal-predictions-wrap {
     margin: 0 22px 16px;
 }
@@ -522,7 +514,6 @@ tbody tr:nth-child(even) {
     border-bottom: none;
 }
 
-/* eBird link */
 .bird-modal-ebird-wrap {
     margin: 0 22px 22px;
     text-align: center;
@@ -545,7 +536,74 @@ tbody tr:nth-child(even) {
     color: white;
 }
 
-/* Make table rows show a hover highlight when clickable */
 #sightings-table tbody tr:hover {
     background-color: #edf5e8 !important;
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.pagination {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 4px;
+}
+
+#pagination-top .pagination {
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 12px;
+}
+
+#pagination-bottom .pagination {
+    border-top: 1px solid #ddd;
+    margin-top: 12px;
+}
+
+.page-btn {
+    background-color: #ffffff;
+    color: #3d5a2a;
+    border: 1px solid #b0c9a0;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    min-width: 36px;
+    text-align: center;
+}
+
+.page-btn:hover:not([disabled]) {
+    background-color: #547c38;
+    color: #ffffff;
+    border-color: #547c38;
+}
+
+.page-btn.page-active {
+    background-color: #3d5a2a;
+    color: #ffffff;
+    border-color: #3d5a2a;
+    font-weight: 700;
+    cursor: default;
+}
+
+.page-btn[disabled] {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.page-ellipsis {
+    color: #888;
+    padding: 0 4px;
+    font-size: 1em;
+    user-select: none;
+}
+
+.page-info {
+    margin-left: auto;
+    font-size: 0.85em;
+    color: #666;
+    white-space: nowrap;
 }

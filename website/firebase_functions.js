@@ -9,8 +9,6 @@ import "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js";
 // ============================================
 // FIREBASE CONFIGURATION
 // ============================================
-// TODO: Replace this with YOUR Firebase config from the Firebase Console
-// You got this when you registered your web app in Step 5 of the setup
 const firebaseConfig = {
     apiKey: "AIzaSyBwq3mq6rS-3wMykWvV-oZl1wuh40esqIo",
     authDomain: "bird-nerd-27eb1.firebaseapp.com",
@@ -34,13 +32,19 @@ try {
 }
 
 // ============================================
+// PAGINATION STATE
+// ============================================
+const PAGE_SIZE = 25;
+let currentPage = 1;
+let _cachedSightings = [];
+
+// ============================================
 // ADMIN AUTHENTICATION
 // ============================================
 
 let isAdmin = false;
 let currentUser = null;
 
-// Monitor auth state
 auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
@@ -53,7 +57,6 @@ auth.onAuthStateChanged((user) => {
         hideAdminStatus();
         console.log("No user logged in");
     }
-    // Reload sightings to show/hide delete buttons
     if (db) {
         loadSightings();
     }
@@ -94,8 +97,6 @@ function showLoginError(message) {
 
 async function handleLogin(username, password) {
     try {
-        // Convert username to email format for Firebase Auth
-        // Admin username is <REDACTED> and password is <REDACTED>
         const email = `${username}@birdnerd.local`;
         await auth.signInWithEmailAndPassword(email, password);
         hideLoginModal();
@@ -131,23 +132,19 @@ async function deleteSighting(sightingId, birdName) {
 
     if (confirm(`Are you sure you want to delete this sighting?\n\n${birdName}\n\nThis action cannot be undone.`)) {
         try {
-            // Delete Firestore document
             await db.collection('sightings').doc(sightingId).delete();
             console.log(`Deleted Firestore doc: ${sightingId}`);
 
-            // Delete paired image from Firebase Storage (sightings/{docId}.jpg)
             try {
                 const storagePath = `sightings/${sightingId}.jpg`;
                 const storageRef = firebase.storage().ref(storagePath);
                 await storageRef.delete();
                 console.log(`Deleted Storage image: ${storagePath}`);
             } catch (storageErr) {
-                // Not fatal — image may not exist (older entries, upload failures)
                 if (storageErr.code !== 'storage/object-not-found') {
                     console.warn("Storage image delete warning:", storageErr.message);
                 }
             }
-            // The onSnapshot listener will automatically update the UI
         } catch (error) {
             console.error("Error deleting sighting:", error);
             alert("Failed to delete sighting. Please try again.");
@@ -167,14 +164,10 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
     handleLogin(username, password);
 });
 
-// Close modal when clicking outside
 document.getElementById('login-modal').addEventListener('click', (e) => {
-    if (e.target.id === 'login-modal') {
-        hideLoginModal();
-    }
+    if (e.target.id === 'login-modal') hideLoginModal();
 });
 
-// Close modal with Escape key
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('login-modal').style.display === 'flex') {
         hideLoginModal();
@@ -186,7 +179,6 @@ document.addEventListener('keydown', (e) => {
 // ============================================
 
 function formatTimestamp(timestamp, timezone) {
-    // Handle Firestore Timestamp object
     let date;
     if (timestamp && timestamp.toDate) {
         date = timestamp.toDate();
@@ -196,48 +188,44 @@ function formatTimestamp(timestamp, timezone) {
         return "Unknown";
     }
 
-    // Format with the timezone from the database
     const options = {
-        weekday: 'long', // "Monday", "Tuesday", etc.
-        year: 'numeric', // "2026"
-        month: 'short', // "Jan", "Feb", etc.
-        day: 'numeric', // "1", "2", ..., "31"
-        hour: '2-digit', // "01", "02", ..., "12"
-        minute: '2-digit', // "00", "01", ..., "59"
-        timeZone: timezone || 'America/New_York', // Use stored timezone or default to EST
-        timeZoneName: 'short' // Shows "EST", "EDT", etc.
+        weekday: 'long',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: timezone || 'America/New_York',
+        timeZoneName: 'short'
     };
     return date.toLocaleString('en-US', options);
 }
 
 function getConfidenceClass(confidence) {
-    if (confidence >= 0.90) return 'confidence-high'; // 90% - 100% = high (green)
-    if (confidence >= 0.70) return 'confidence-medium'; // 70% - 90% = medium (orange)
-    return 'confidence-low'; // 0% - 70% = low (red)
+    if (confidence >= 0.90) return 'confidence-high';
+    if (confidence >= 0.70) return 'confidence-medium';
+    return 'confidence-low';
 }
 
 function formatConfidence(confidence) {
-    // Floor to 2 decimal places and cap at 99.99%
     let percent = Math.floor(confidence * 100 * 100) / 100;
     return Math.min(percent, 99.99);
 }
 
 function formatTopPredictions(predictions) {
     if (!predictions || predictions.length === 0) return predictions;
-    
-    // Format each prediction with flooring and capping
+
     let formatted = predictions.map(pred => ({
         ...pred,
         confidence: formatConfidence(pred.confidence)
     }));
-    
-    // If the top prediction is 99.99%, ensure the next two are at least 0.01%
+
     if (formatted[0].confidence === 99.99) {
         for (let i = 1; i < Math.min(3, formatted.length); i++) {
             formatted[i].confidence = Math.max(formatted[i].confidence, 0.01);
         }
     }
-    
+
     return formatted;
 }
 
@@ -271,7 +259,69 @@ function getRelativeTime(timestamp) {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    return formatTimestamp(timestamp, 'America/New_York').split(',')[0]; // Just the date
+    return formatTimestamp(timestamp, 'America/New_York').split(',')[0];
+}
+
+// ============================================
+// PAGINATION
+// ============================================
+
+function getTotalPages() {
+    return Math.max(1, Math.ceil(_cachedSightings.length / PAGE_SIZE));
+}
+
+function goToPage(page) {
+    const total = getTotalPages();
+    currentPage = Math.max(1, Math.min(page, total));
+    renderSightings(_cachedSightings);
+    document.getElementById('table-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderPagination(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const total = getTotalPages();
+    const current = currentPage;
+
+    if (total <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    // Always show first, last, current ± 1, with ellipses
+    const pages = new Set();
+    pages.add(1);
+    pages.add(total);
+    for (let p = Math.max(1, current - 1); p <= Math.min(total, current + 1); p++) {
+        pages.add(p);
+    }
+    const pageList = [...pages].sort((a, b) => a - b);
+
+    let html = `<div class="pagination">`;
+    html += `<button class="page-btn page-prev" ${current === 1 ? 'disabled' : ''} data-page="${current - 1}">&#8592; Prev</button>`;
+
+    let prev = null;
+    for (const p of pageList) {
+        if (prev !== null && p - prev > 1) {
+            html += `<span class="page-ellipsis">&hellip;</span>`;
+        }
+        html += `<button class="page-btn ${p === current ? 'page-active' : ''}" data-page="${p}">${p}</button>`;
+        prev = p;
+    }
+
+    html += `<button class="page-btn page-next" ${current === total ? 'disabled' : ''} data-page="${current + 1}">Next &#8594;</button>`;
+
+    const startEntry = (current - 1) * PAGE_SIZE + 1;
+    const endEntry = Math.min(current * PAGE_SIZE, _cachedSightings.length);
+    html += `<span class="page-info">Showing ${startEntry}–${endEntry} of ${_cachedSightings.length}</span>`;
+    html += `</div>`;
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.page-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => goToPage(parseInt(btn.dataset.page)));
+    });
 }
 
 // ============================================
@@ -279,14 +329,11 @@ function getRelativeTime(timestamp) {
 // ============================================
 
 function updateStatistics(sightings) {
-    // Total sightings
     document.getElementById('total-sightings').textContent = sightings.length;
 
-    // Unique species
     const uniqueSpecies = new Set(sightings.map(s => s.scientific_name));
     document.getElementById('unique-species').textContent = uniqueSpecies.size;
 
-    // Last sighting
     if (sightings.length > 0) {
         const lastTime = getRelativeTime(sightings[0].timestamp);
         document.getElementById('last-sighting').textContent = lastTime;
@@ -299,27 +346,24 @@ function updateStatistics(sightings) {
 // BIRD DETAIL MODAL
 // ============================================
 
-// Cache of all sightings for computing per-species stats
 let _allSightings = [];
 
 function openBirdModal(sighting) {
-    // ── Stats ──────────────────────────────────────────────────────
     const scientificName = sighting.scientific_name;
     const now = new Date();
 
-    const allTime  = _allSightings.filter(s => s.scientific_name === scientificName).length;
-    const last30   = _allSightings.filter(s => {
+    const allTime = _allSightings.filter(s => s.scientific_name === scientificName).length;
+    const last30  = _allSightings.filter(s => {
         const d = s.timestamp && s.timestamp.toDate ? s.timestamp.toDate() : null;
         return d && s.scientific_name === scientificName && (now - d) <= 30 * 86400000;
     }).length;
-    const last7    = _allSightings.filter(s => {
+    const last7   = _allSightings.filter(s => {
         const d = s.timestamp && s.timestamp.toDate ? s.timestamp.toDate() : null;
         return d && s.scientific_name === scientificName && (now - d) <= 7 * 86400000;
     }).length;
 
-    // ── Image ──────────────────────────────────────────────────────
-    const modalImg     = document.getElementById('bird-modal-img');
-    const noImgText    = document.getElementById('bird-modal-no-img');
+    const modalImg  = document.getElementById('bird-modal-img');
+    const noImgText = document.getElementById('bird-modal-no-img');
     if (sighting.image_url) {
         modalImg.src = sighting.image_url;
         modalImg.style.display = 'block';
@@ -329,19 +373,16 @@ function openBirdModal(sighting) {
         noImgText.style.display = 'block';
     }
 
-    // ── Text fields ────────────────────────────────────────────────
-    document.getElementById('bird-modal-common').textContent    = sighting.common_name;
-    document.getElementById('bird-modal-scientific').textContent = sighting.scientific_name;
-    document.getElementById('bird-modal-time').textContent       = formatTimestamp(sighting.timestamp, sighting.timezone);
-    document.getElementById('bird-modal-confidence').textContent = formatConfidence(sighting.confidence) + '%';
-    document.getElementById('bird-modal-confidence').className   = 'confidence ' + getConfidenceClass(sighting.confidence);
+    document.getElementById('bird-modal-common').textContent     = sighting.common_name;
+    document.getElementById('bird-modal-scientific').textContent  = sighting.scientific_name;
+    document.getElementById('bird-modal-time').textContent        = formatTimestamp(sighting.timestamp, sighting.timezone);
+    document.getElementById('bird-modal-confidence').textContent  = formatConfidence(sighting.confidence) + '%';
+    document.getElementById('bird-modal-confidence').className    = 'confidence ' + getConfidenceClass(sighting.confidence);
 
-    // ── Stats ──────────────────────────────────────────────────────
     document.getElementById('bird-modal-alltime').textContent = allTime;
     document.getElementById('bird-modal-30days').textContent  = last30;
     document.getElementById('bird-modal-7days').textContent   = last7;
 
-    // ── Top 3 Predictions ──────────────────────────────────────────
     const predList = document.getElementById('bird-modal-predictions');
     predList.innerHTML = '';
     const formattedPredictions = formatTopPredictions(sighting.top_3_predictions);
@@ -355,32 +396,25 @@ function openBirdModal(sighting) {
         predList.innerHTML = '<li>No predictions available</li>';
     }
 
-    // ── eBird link ─────────────────────────────────────────────────
     const ebirdLink = document.getElementById('bird-modal-ebird');
     ebirdLink.href = 'https://ebird.org/home';
     ebirdLink.textContent = `Learn more about ${sighting.common_name} on eBird`;
 
-    // Show modal
     document.getElementById('bird-modal').style.display = 'flex';
 }
 
 function closeBirdModal() {
     document.getElementById('bird-modal').style.display = 'none';
-    // Clear image src to stop loading if user closes quickly
     document.getElementById('bird-modal-img').src = '';
 }
 
-// Close on backdrop click
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bird-modal').addEventListener('click', (e) => {
         if (e.target.id === 'bird-modal') closeBirdModal();
     });
-
-    // Add event listener for the close button
     document.querySelector('.bird-modal-close').addEventListener('click', closeBirdModal);
 });
 
-// Close with Escape key (alongside the login modal handler)
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('bird-modal').style.display === 'flex') {
         closeBirdModal();
@@ -391,25 +425,29 @@ document.addEventListener('keydown', (e) => {
 // TABLE RENDERING
 // ============================================
 
-// ── Image preview height — adjust this one constant to resize all previews ──
 const IMAGE_PREVIEW_HEIGHT_PX = 200;
 
 function renderSightings(sightings) {
     const tbody = document.getElementById('sightings-body');
     tbody.innerHTML = '';
 
+    // Slice to current page
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageSightings = sightings.slice(start, start + PAGE_SIZE);
+
     if (sightings.length === 0) {
         const colspan = isAdmin ? 5 : 4;
         tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">No bird sightings yet. Check back soon!</td></tr>`;
+        renderPagination('pagination-top');
+        renderPagination('pagination-bottom');
         return;
     }
 
-    sightings.forEach(sighting => {
+    pageSightings.forEach(sighting => {
         const row = document.createElement('tr');
         row.style.cursor = 'pointer';
         row.title = 'Click to view details';
         row.addEventListener('click', (e) => {
-            // Don't open modal when clicking the delete button
             if (e.target.classList.contains('delete-btn')) return;
             openBirdModal(sighting);
         });
@@ -427,7 +465,7 @@ function renderSightings(sightings) {
         }
         row.appendChild(dateCell);
 
-        // Bird Species (Common + Scientific)
+        // Bird Species
         const speciesCell = document.createElement('td');
         speciesCell.innerHTML = `
           <div>${sighting.common_name}</div>
@@ -440,8 +478,8 @@ function renderSightings(sightings) {
         const confidencePercent = formatConfidence(sighting.confidence);
         confidenceCell.innerHTML = `<span class="confidence ${getConfidenceClass(sighting.confidence)}">${confidencePercent}%</span>`;
         row.appendChild(confidenceCell);
-        
-        // Image Preview (replaces Predictions column)
+
+        // Image Preview
         const imageCell = document.createElement('td');
         imageCell.className = 'image-preview-cell';
         if (sighting.image_url) {
@@ -468,7 +506,7 @@ function renderSightings(sightings) {
             deleteBtn.className = 'delete-btn';
             deleteBtn.textContent = 'Delete';
             deleteBtn.onclick = (e) => {
-                e.stopPropagation(); // prevent row click / modal open
+                e.stopPropagation();
                 deleteSighting(sighting.id, sighting.common_name);
             };
             actionsCell.appendChild(deleteBtn);
@@ -477,17 +515,18 @@ function renderSightings(sightings) {
 
         tbody.appendChild(row);
     });
+
+    renderPagination('pagination-top');
+    renderPagination('pagination-bottom');
 }
 
 function loadSightings() {
     hideError();
 
-    // Query Firestore for all sightings, ordered by timestamp (newest first)
     db.collection('sightings')
         .orderBy('timestamp', 'desc')
         .onSnapshot((snapshot) => {
             const sightings = [];
-
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 data.id = doc.id;
@@ -496,10 +535,10 @@ function loadSightings() {
 
             console.log(`Loaded ${sightings.length} sightings`);
 
-            // Cache sightings for per-species stats in the modal
             _allSightings = sightings;
+            _cachedSightings = sightings;
+            currentPage = 1;
 
-            // Update UI
             document.getElementById('loading').style.display = 'none';
             document.getElementById('table-container').style.display = 'block';
 
@@ -516,7 +555,6 @@ function loadSightings() {
 // INITIALIZE
 // ============================================
 
-// Load sightings when page loads
 if (db) {
     loadSightings();
 }
