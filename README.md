@@ -10,8 +10,6 @@ The platform also serves as a practical companion for bird feeding, notifying th
 ## Authors
 Jacob Tocila: 25, A senior at Calvin University majoring in computer science with minors in data science and Dutch studies. He is interested in information security, baking, and puzzles.
 
-Sam Lamsma: 21, A senior at Calvin University, majoring in computer science. He is interested in Cybersecurity and also throws for the Calvin University Track and Field Team.
-
 Professor Derek C. Schuurman, current chair of the Calvin computer science department and the advisor for the project.  
 
 Calvin University, Fall 2025 - Spring 2026
