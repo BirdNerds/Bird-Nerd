@@ -181,6 +181,12 @@ function formatTimestamp(timestamp, timezone) {
         return "Unknown";
     }
 
+    // Fall back to America/New_York if timezone is an offset like "UTC-4"
+    // which browsers don't accept as a valid IANA timezone
+    const safeTimezone = (timezone && !timezone.startsWith('UTC')) 
+        ? timezone 
+        : 'America/New_York';
+
     const options = {
         weekday: 'long',
         year: 'numeric',
@@ -188,7 +194,7 @@ function formatTimestamp(timestamp, timezone) {
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: timezone || 'America/New_York',
+        timeZone: safeTimezone,
         timeZoneName: 'short'
     };
     return date.toLocaleString('en-US', options);
