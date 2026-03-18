@@ -1,4 +1,4 @@
-# Bird Nerd — Quick Start Guide
+# Bird Nerd — Quick Start Guide (WIP)
 
 > **Bird Nerd** is an IoT bird feeder system that uses motion detection and on-device TensorFlow Lite inference to automatically identify bird species, log sightings to Firebase, and display them on a live website.
 
