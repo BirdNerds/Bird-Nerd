@@ -1,3 +1,16 @@
+# Bird Nerd
+website/firebase_config.js
+motion_camera/.credentials/
+motion_camera/*-adminsdk*.json
+motion_camera/.env
+motion_camera/.env.local
+motion_camera/images/
+motion_camera/unclear_images/
+motion_camera/models/*.tflite
+motion_camera/fake_bird_image.png
+motion_camera/sightings.log
+/tmp/bird_feeder/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

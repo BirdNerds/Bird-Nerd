@@ -5,18 +5,11 @@ import "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js";
+import { firebaseConfig } from "./firebase_config.js";
 
 // ============================================
 // FIREBASE CONFIGURATION
 // ============================================
-const firebaseConfig = {
-    apiKey: "AIzaSyBwq3mq6rS-3wMykWvV-oZl1wuh40esqIo",
-    authDomain: "bird-nerd-27eb1.firebaseapp.com",
-    projectId: "bird-nerd-27eb1",
-    storageBucket: "bird-nerd-27eb1.firebasestorage.app",
-    messagingSenderId: "832918617928",
-    appId: "1:832918617928:web:fe79157c19fa944823bd7d"
-};
 
 // Initialize Firebase
 let db;
