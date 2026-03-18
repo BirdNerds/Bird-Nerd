@@ -1,0 +1,17 @@
+# Bird Nerd - Python dependencies
+# Install with: pip install -r requirements.txt
+#
+# Note: tflite-runtime is the preferred lightweight runtime for Raspberry Pi.
+# If tflite-runtime is unavailable for your platform, install tensorflow instead:
+#   pip install tensorflow==2.20.0
+
+tflite-runtime==2.14.0
+opencv-python-headless==4.13.0.92
+numpy==1.26.4
+firebase-admin==7.1.0
+python-dotenv==1.2.1
+pytz==2025.2
+tzlocal==5.3.1
+
+# Only needed if downloading the model via setup_bird_model.py
+# kagglehub
