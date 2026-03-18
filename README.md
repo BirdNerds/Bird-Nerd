@@ -71,7 +71,7 @@ Initial prototype using Ollama's llava:7b vision model for bird identification. 
 
 ## Quick Start
 
-*Documentation in progress - setup instructions coming soon. There are rough steps to setting a virtual environment to run bird_ID_tflite.py on a Raspberry Pi in the Google Docs, under "To create virtual environment" section. This will be refined further in the future.*
+Refer to `QUICKSTART.md` for detailed setup instructions, including hardware assembly, software installation, and configuration steps to get the Bird Nerd system up and running on a Raspberry Pi.
 
 ## Hardware Requirements
 - Raspberry Pi 4 (1GB+ RAM)
