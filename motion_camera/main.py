@@ -54,28 +54,26 @@ LABELS_PATH = os.path.join(SCRIPT_DIR, "models", "labels.txt")
 CONFIDENCE_THRESHOLD = 0.6  # Minimum confidence to save to /images/ any lower goes to /unclear/
 
 # Motion Detection Settings
-MOTION_THRESHOLD = 40
-MIN_AREA = 2000
+MOTION_THRESHOLD = 75
+MIN_AREA = 12000
 BLUR_SIZE = 21
 
 # Large-motion and bbox padding heuristics
-LARGE_MOVE_RATIO = 0.6   # If largest bbox covers >60% of frame, skip classification
+LARGE_MOVE_RATIO = 0.35   # If largest bbox covers >35% of frame, skip classification
 BBOX_PADDING = 1.25      # Scale bbox by this factor when cropping for classification
 
 # Pre-classification heuristics to avoid classifying smooth backgrounds
-LAP_VAR_THRESHOLD = 12.0         # variance of Laplacian below this => too smooth (skip)
+LAP_VAR_THRESHOLD = 18.0         # variance of Laplacian below this => too smooth (skip)
 ASPECT_RATIO_RANGE = (0.08, 12.0) # acceptable w/h ratio for candidate crop
 
 # Camera Settings
-IMAGE_WIDTH = 1920
-IMAGE_HEIGHT = 1080
+IMAGE_WIDTH = 2592
+IMAGE_HEIGHT = 1944
 CAPTURE_TIMEOUT = 2000 # milliseconds
 
 # Timing
 CHECK_INTERVAL = 0.5 # seconds between motion checks
-COOLDOWN_PERIOD = 10.0 # seconds to wait after a detection
-# Real world: COOLDOWN_PERIOD = 30 seconds
-# Testing: COOLDOWN_PERIOD = 10 seconds
+COOLDOWN_PERIOD = 8.0 # seconds to wait after a detection
 
 # Timezone for logging/database
 LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # EST/EDT
