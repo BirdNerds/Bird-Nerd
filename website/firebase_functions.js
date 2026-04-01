@@ -362,13 +362,22 @@ function openBirdModal(sighting) {
     }).length;
 
     const modalImg  = document.getElementById('bird-modal-img');
+    const modalGif  = document.getElementById('bird-modal-gif');
     const noImgText = document.getElementById('bird-modal-no-img');
-    if (sighting.image_url) {
+
+    if (sighting.gif_url) {
+        modalGif.src = sighting.gif_url;
+        modalGif.style.display = 'block';
+        modalImg.style.display = 'none';
+        noImgText.style.display = 'none';
+    } else if (sighting.image_url) {
         modalImg.src = sighting.image_url;
         modalImg.style.display = 'block';
+        modalGif.style.display = 'none';
         noImgText.style.display = 'none';
     } else {
         modalImg.style.display = 'none';
+        modalGif.style.display = 'none';
         noImgText.style.display = 'block';
     }
 
@@ -405,6 +414,7 @@ function openBirdModal(sighting) {
 function closeBirdModal() {
     document.getElementById('bird-modal').style.display = 'none';
     document.getElementById('bird-modal-img').src = '';
+    document.getElementById('bird-modal-gif').src = '';
 }
 
 document.addEventListener('DOMContentLoaded', () => {

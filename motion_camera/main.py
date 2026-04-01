@@ -217,7 +217,7 @@ def main() -> None:
                 continue
 
             # ---- Motion detected — start a visit -------------------------
-            visit_start = datetime.now()
+            visit_start = datetime.now(config.LOCAL_TIMEZONE)
             now_str     = visit_start.strftime("%H:%M:%S")
             print(f"{now_str}  Motion detected (area={area:.0f} px).  Recording visit...")
             visit_count += 1

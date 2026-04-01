@@ -48,6 +48,9 @@ def open_camera() -> None:
     _camera.configure(still_cfg)
     _camera.start()
     time.sleep(2.0)
+    _camera.set_controls({"AwbEnable": False, "AwbMode": 1})  # lock auto white balance after warmup
+    # Can also try:
+    # _camera.set_controls({"AwbMode": lc.AwbModeEnum.Daylight}) # Looking through a window, so daylight white balance is more consistent than auto
 
 
 def close_camera() -> None:

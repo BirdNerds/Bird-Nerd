@@ -26,9 +26,9 @@ LABELS_PATH  = os.path.join(SCRIPT_DIR, "models", "labels.txt")
 CAPTURE_WIDTH  = 2592
 CAPTURE_HEIGHT = 1944
 
-# GIF output resolution (720p-ish, keeps file sizes reasonable on 1 GB Pi)
-GIF_WIDTH  = 1280
-GIF_HEIGHT = 960
+# GIF output resolution (, keeps file sizes reasonable on 1 GB Pi)
+GIF_WIDTH  = 1024
+GIF_HEIGHT = 768
 
 # Frames per second during a bird visit burst capture
 # picamera2 can comfortably do ~8 fps at GIF resolution on a Pi 4
@@ -64,8 +64,8 @@ LARGE_MOTION_RATIO = 0.35
 NO_MOTION_TIMEOUT = 4.0    # seconds
 
 # Hard cap on a single visit's GIF length regardless of motion.
-# IRL window-feeder visits are typically 5 to 25 seconds; 30 seconds is a safe ceiling.
-MAX_VISIT_DURATION = 30.0  # seconds
+# IRL window-feeder visits are typically 5 to 25 seconds
+MAX_VISIT_DURATION = 15.0  # seconds
 
 # Brief pause between motion-check frames when no visit is active.
 IDLE_CHECK_INTERVAL = 0.4  # seconds
