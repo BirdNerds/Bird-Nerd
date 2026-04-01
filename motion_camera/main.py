@@ -1,5 +1,5 @@
 """
-main.py - Bird Nerd engine.
+main.py - Bird Nerd main loop and terminal output.
 
 This file owns:
   - All terminal print() output
@@ -7,14 +7,13 @@ This file owns:
   - The top-level visit state machine
   - Ctrl+C shutdown
 
-This contains NO business logic - that lives in the other modules.
-
 Visit state machine
 -------------------
 IDLE        waiting for motion inside the ROI
 RECORDING   bird detected; burst capture running in a background thread;
             motion checked each frame to detect departure
 PROCESSING  burst finished; classify, build GIF, upload, log
+-------------------------------------------------
 """
 
 import os
@@ -53,11 +52,11 @@ def _print_header(firebase_ok: bool, model_ok: bool) -> None:
     print(f"  Log file  : {config.LOG_FILE}")
     print(f"  Images    : {config.IMAGES_DIR}")
     print(f"  GIFs      : {config.GIFS_DIR}")
-    print(f"  Model     : {'loaded' if model_ok else 'NOT FOUND: motion-only mode'}")
+    print(f"  Model     : {'loaded' if model_ok else 'NOT FOUND — motion-only mode'}")
     print(f"  Firebase  : {'connected' if firebase_ok else 'disabled'}")
     print(f"  ROI       : top={config.ROI_TOP:.0%}  bottom={config.ROI_BOTTOM:.0%}"
           f"  left={config.ROI_LEFT:.0%}  right={config.ROI_RIGHT:.0%}")
-    print(f"  Burst     : {config.BURST_FPS} fps  max {config.MAX_VISIT_DURATION:.0f}seconds"
+    print(f"  Burst     : {config.BURST_FPS} fps  max {config.MAX_VISIT_DURATION:.0f}s"
           f"  classify every {config.CLASSIFY_EVERY_N_FRAMES} frames")
     print("=" * 60)
     print("Press Ctrl+C to stop.\n")
@@ -81,31 +80,29 @@ def _record_visit_thread(stop_event: threading.Event, result_box: list) -> None:
 # ---------------------------------------------------------------------------
 
 def _process_visit(
-    frames: list,
+    frame_paths: list,
     classifier: "bird_classify.BirdClassifier | None",
     firebase_ok: bool,
     visit_start: datetime,
 ) -> None:
     """
     Classify the burst, build a GIF, save a thumbnail, log and upload.
+    Accepts file paths rather than numpy arrays - frames stay on disk
+    until needed, keeping RAM flat.
     All print() statements for the outcome live here.
     """
     now_str = datetime.now().strftime("%H:%M:%S")
 
-    if not frames:
+    if not frame_paths:
         print(f"{now_str}  Visit ended with no frames captured.")
         return
 
-    print(f"{now_str}  Visit ended - {len(frames)} frames captured.")
+    print(f"{now_str}  Visit ended — {len(frame_paths)} frames captured.")
 
-    # -- Apply ROI to frames before classification -------------------------
-    # GIF frames are already at GIF resolution; apply_roi works on any size.
-    roi_frames = [motion_detect.apply_roi(f) for f in frames]
-
-    # -- Classification ----------------------------------------------------
+    # -- Classification (vote() loads frames from disk one at a time) -----
     result = None
     if classifier is not None:
-        result = classifier.vote(roi_frames)
+        result = classifier.vote(frame_paths)
 
     if result is None:
         label      = "unknown"
@@ -127,10 +124,10 @@ def _process_visit(
     # -- Build GIF + thumbnail --------------------------------------------
     try:
         gif_path, thumb_path = gif_builder.build(
-            frames    = frames,
-            label     = label,
-            thumb_dir = thumb_dir,
-            timestamp = visit_start,
+            frame_paths = frame_paths,
+            label       = label,
+            thumb_dir   = thumb_dir,
+            timestamp   = visit_start,
         )
         print(f"{now_str}  Saved GIF      : {os.path.basename(gif_path)}")
         print(f"{now_str}  Saved thumbnail: {os.path.basename(thumb_path)}")
@@ -185,7 +182,7 @@ def main() -> None:
         try:
             classifier = bird_classify.BirdClassifier()
         except Exception as e:
-            print(f"Model load failed: {e} - running in motion-only mode.")
+            print(f"Model load failed: {e} — running in motion-only mode.")
             model_ok = False
 
     _print_header(firebase_ok, model_ok)
@@ -197,7 +194,7 @@ def main() -> None:
 
     # Capture initial reference frame
     prev_roi = motion_detect.apply_roi(frame_capture.grab_frame())
-    print("Ready - monitoring for birds.\n")
+    print("Ready — monitoring for birds.\n")
 
     try:
         while True:
@@ -213,9 +210,10 @@ def main() -> None:
                 prev_roi = current_roi
                 # Print a heartbeat every 60 checks (~24 s at 0.4 s interval)
                 if check_count % 60 == 0:
-                    elapsed_sec = int(time.monotonic() - program_start)
-                    elapsed_str = f"{elapsed_sec // 60}:{elapsed_sec % 60:02d}"
-                    print(f"  Monitoring... {elapsed_str} elapsed, {visit_count} visit(s) recorded.")
+                    elapsed_min = (time.monotonic() - program_start) / 60
+                    print(f"  Monitoring... "
+                          f"{elapsed_min:.1f} min elapsed, "
+                          f"{visit_count} visit(s) recorded.")
                 continue
 
             # ---- Motion detected — start a visit -------------------------
@@ -242,26 +240,34 @@ def main() -> None:
             last_motion_time = time.monotonic()
             visit_deadline   = last_motion_time + config.MAX_VISIT_DURATION
 
+            # During burst capture the camera is in video (GIF) resolution mode.
+            # grab_frame() would return a different resolution than current_roi,
+            # causing the OpenCV size-mismatch crash.  Instead we monitor the
+            # temp directory: as long as new frames are being written to disk the
+            # bird is still being recorded.  We declare the visit over when no new
+            # frame has appeared for NO_MOTION_TIMEOUT seconds, or the deadline hits.
+            last_frame_count = 0
+            last_new_frame_time = time.monotonic()
             while time.monotonic() < visit_deadline:
                 time.sleep(config.IDLE_CHECK_INTERVAL)
-                check_frame = frame_capture.grab_frame()
-                check_roi   = motion_detect.apply_roi(check_frame)
-                m, _, _     = motion_detect.detect_motion(current_roi, check_roi)
-                current_roi = check_roi  # advance the reference
-
-                if m:
-                    last_motion_time = time.monotonic()
-                elif time.monotonic() - last_motion_time >= config.NO_MOTION_TIMEOUT:
-                    break   # bird go bye bye
+                current_frame_count = len([
+                    f for f in os.listdir("/tmp/bird_nerd_burst")
+                    if f.endswith(".jpg")
+                ])
+                if current_frame_count > last_frame_count:
+                    last_frame_count    = current_frame_count
+                    last_new_frame_time = time.monotonic()
+                elif time.monotonic() - last_new_frame_time >= config.NO_MOTION_TIMEOUT:
+                    break   # no new frames written — bird likely gone
 
             stop_event.set()
             recorder_thread.join(timeout=5.0)
 
-            frames = result_box[0] if result_box else []
-            _process_visit(frames, classifier, firebase_ok, visit_start)
+            frame_paths = result_box[0] if result_box else []
+            _process_visit(frame_paths, classifier, firebase_ok, visit_start)
 
             # Update reference frame after the visit so a stationary background
-            # doesn't immediately re-trigger
+            # doesn't immediately re-trigger.
             prev_roi = motion_detect.apply_roi(frame_capture.grab_frame())
 
     except KeyboardInterrupt:

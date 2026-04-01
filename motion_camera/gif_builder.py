@@ -1,17 +1,14 @@
 """
-gif_builder.py - Turn a list of BGR frames into a GIF and a JPEG thumbnail.
+gif_builder.py - Turn on-disk JPEG frames into a GIF and a JPEG thumbnail.
+
+Frames are loaded one at a time from disk so RAM usage stays flat regardless
+of burst length.
 
 Public API
 ----------
-  gif_path, thumb_path = build(frames, label, timestamp)
+  gif_path, thumb_path = build(frame_paths, label, thumb_dir, timestamp)
 
-  - gif_path   : path to the saved GIF  (in config.GIFS_DIR)
-  - thumb_path : path to the JPEG still (in config.IMAGES_DIR or UNCLEAR_DIR
-                 depending on caller - the caller chooses the directory)
-
-The thumbnail is the sharpest frame from the burst, selected by Laplacian
-variance.  It is saved separately so the website can show a static image in
-the table and play the GIF only inside the detail modal.
+No printing — main.py handles all terminal output.
 """
 
 import os
@@ -25,105 +22,95 @@ from PIL import Image
 import config
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _clean_label(label: str) -> str:
-    """Make label safe for use as a filename component."""
     label = label.replace(" ", "_").replace("(", "").replace(")", "")
     return "".join(c for c in label if c.isalnum() or c == "_")
 
 
-def _sharpest_frame(frames: list[np.ndarray]) -> np.ndarray:
-    """
-    Return the frame with the highest Laplacian variance (i.e. sharpest).
-    Used to pick the thumbnail so the still image looks as clean as possible.
-    """
-    best_score = -1.0
-    best_frame = frames[0]
-    for frame in frames:
-        gray  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        score = cv2.Laplacian(gray, cv2.CV_64F).var()
-        if score > best_score:
-            best_score = score
-            best_frame = frame
-    return best_frame
-
-
 def _bgr_to_pil(bgr: np.ndarray) -> Image.Image:
-    """Convert a BGR numpy array to a PIL RGB Image."""
     return Image.fromarray(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
 
 
-# ---------------------------------------------------------------------------
-# Public
-# ---------------------------------------------------------------------------
-
 def build(
-    frames: list[np.ndarray],
+    frame_paths: list[str],
     label: str,
     thumb_dir: str,
     timestamp: datetime | None = None,
 ) -> tuple[str, str]:
     """
-    Save a GIF and a JPEG thumbnail from a burst of BGR frames.
+    Save a GIF and a JPEG thumbnail from a list of on-disk JPEG frame paths.
+
+    Frames are loaded one at a time to keep RAM flat - at no point is the
+    entire burst held in memory simultaneously to avoid OOM on a 1 GB Pi.
 
     Args:
-        frames    : list of BGR numpy arrays at GIF resolution.
-        label     : winning species label (used in filenames).
-        thumb_dir : directory for the JPEG still - caller passes either
-                    config.IMAGES_DIR (high-confidence) or config.UNCLEAR_DIR.
-        timestamp : datetime to embed in filenames; defaults to now.
+        frame_paths : list of paths returned by frame_capture.record_visit().
+        label       : winning species label (used in filenames).
+        thumb_dir   : directory for the JPEG still.
+        timestamp   : datetime to embed in filenames; defaults to now.
 
     Returns:
         (gif_path, thumb_path) - absolute paths to the saved files.
-
-    GIF notes:
-        - Frame duration is derived from config.BURST_FPS.
-        - We use Pillow's LANCZOS resampler and quantize to 256 colours per
-          frame (standard GIF limitation).  Pillow's default dithering is
-          applied to soften colour banding.
-        - loop=0 means the GIF loops forever, which suits autoplay on the site.
-        - Firebase Storage handles GIFs just like any other binary blob.
     """
-    if not frames:
+    if not frame_paths:
         raise ValueError("build() called with an empty frame list.")
 
     Path(config.GIFS_DIR).mkdir(parents=True, exist_ok=True)
     Path(thumb_dir).mkdir(parents=True, exist_ok=True)
 
-    ts      = timestamp or datetime.now()
-    ts_str  = ts.strftime("%Y_%m_%d_%H_%M_%S")
-    clean   = _clean_label(label)
-    stem    = f"{ts_str}_{clean}"
+    ts     = timestamp or datetime.now()
+    ts_str = ts.strftime("%Y_%m_%d_%H_%M_%S")
+    clean  = _clean_label(label)
+    stem   = f"{ts_str}_{clean}"
 
-    gif_path   = os.path.join(config.GIFS_DIR,  f"{stem}.gif")
-    thumb_path = os.path.join(thumb_dir,         f"{stem}.jpg")
+    gif_path   = os.path.join(config.GIFS_DIR, f"{stem}.gif")
+    thumb_path = os.path.join(thumb_dir,        f"{stem}.jpg")
 
-    # -- Thumbnail (sharpest frame, JPEG) ---------------------------------
-    best = _sharpest_frame(frames)
-    cv2.imwrite(thumb_path, best, [cv2.IMWRITE_JPEG_QUALITY, 90])
-
-    # -- GIF --------------------------------------------------------------
-    # Frame duration in milliseconds for Pillow
     frame_duration_ms = int(1000 / config.BURST_FPS)
 
-    pil_frames = [_bgr_to_pil(f) for f in frames]
+    # -- Thumbnail: find sharpest frame without loading all at once -------
+    best_score = -1.0
+    best_path  = frame_paths[0]
+    for path in frame_paths:
+        frame = cv2.imread(path)
+        if frame is None:
+            continue
+        gray  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        score = cv2.Laplacian(gray, cv2.CV_64F).var()
+        if score > best_score:
+            best_score = score
+            best_path  = path
+        del frame
 
-    # Quantize each frame to a 256-colour palette (required by GIF format).
-    # Using ADAPTIVE palette per-frame gives better colour accuracy than a
-    # single global palette, at the cost of slightly larger files.
-    quantized = [f.quantize(method=Image.Quantize.MEDIANCUT) for f in pil_frames]
+    best_frame = cv2.imread(best_path)
+    if best_frame is not None:
+        cv2.imwrite(thumb_path, best_frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
+        del best_frame
 
-    quantized[0].save(
+    # -- GIF: build incrementally, one frame at a time --------------------
+    first_bgr = cv2.imread(frame_paths[0])
+    if first_bgr is None:
+        raise ValueError(f"Could not read first frame: {frame_paths[0]}")
+
+    first_pil = _bgr_to_pil(first_bgr).quantize(method=Image.Quantize.MEDIANCUT)
+    del first_bgr
+
+    rest: list[Image.Image] = []
+    for path in frame_paths[1:]:
+        bgr = cv2.imread(path)
+        if bgr is None:
+            continue
+        rest.append(_bgr_to_pil(bgr).quantize(method=Image.Quantize.MEDIANCUT))
+        del bgr
+
+    first_pil.save(
         gif_path,
         format="GIF",
         save_all=True,
-        append_images=quantized[1:],
+        append_images=rest,
         duration=frame_duration_ms,
-        loop=0,          # 0 = loop forever
-        optimize=False,  # optimize=True can corrupt palette on multi-frame GIFs
+        loop=0,
+        optimize=False,
     )
 
     return gif_path, thumb_path

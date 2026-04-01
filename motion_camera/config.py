@@ -40,10 +40,10 @@ BURST_FPS = 8
 #
 # All values are fractions of the full frame (0.0 - 1.0).
 # ---------------------------------------------------------------------------
-ROI_TOP    = 0.30   # crop from 30 % down (removes most sky)
-ROI_BOTTOM = 0.85   # crop to 85 % (keeps feeder lip, removes lower frame edge)
-ROI_LEFT   = 0.10   # crop from 10 % in (removes left window frame)
-ROI_RIGHT  = 0.90   # crop to  90 % in (removes right window frame)
+ROI_TOP    = 0.25   # crop from 25 % down (removes most sky, catches high perches)
+ROI_BOTTOM = 0.92   # crop to  92 % (includes full feeder tray lip)
+ROI_LEFT   = 0.05   # crop from  5 % in (catches birds on left feeder edge)
+ROI_RIGHT  = 0.95   # crop to  95 % in (catches birds on right feeder edge)
 
 # ---------------------------------------------------------------------------
 # Motion detection

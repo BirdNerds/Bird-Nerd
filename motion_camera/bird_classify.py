@@ -10,7 +10,7 @@ Public API
 VoteResult is a named tuple:
   label       str    — winning label string from labels.txt
   confidence  float  — average confidence across winning votes (0-1)
-  top_3       list   — top-3 [(label, confidence), ...] from the best single frame
+  top_3       list   — top-3 [(label, confidence), …] from the best single frame
   vote_count  int    — how many frames agreed on the winning label
   frame_count int    — how many frames were actually classified
 
@@ -25,6 +25,7 @@ import cv2
 import numpy as np
 
 import config
+import motion_detect
 
 # Suppress noisy NumPy subnormal warning that appears on Pi with TFLite
 warnings.filterwarnings(
@@ -105,7 +106,7 @@ class BirdClassifier:
             return tf.lite.Interpreter(model_path=config.MODEL_PATH)
 
     def _preprocess(self, image: np.ndarray) -> np.ndarray:
-        """Resize, convert BGR -> RGB, normalise, add batch dim."""
+        """Resize, convert BGR→RGB, normalise, add batch dim."""
         resized = cv2.resize(image, (self._w, self._h))
         rgb     = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
         if self._fp32:
@@ -146,7 +147,7 @@ class BirdClassifier:
         ]
 
     def _is_textured_enough(self, roi_crop: np.ndarray) -> bool:
-        """Return True if the crop has enough texture to reasonably contain a bird."""
+        """Return True if the crop has enough texture to plausibly contain a bird."""
         gray    = cv2.cvtColor(roi_crop, cv2.COLOR_BGR2GRAY)
         lap_var = cv2.Laplacian(gray, cv2.CV_64F).var()
         return lap_var >= config.LAP_VAR_THRESHOLD
@@ -169,44 +170,41 @@ class BirdClassifier:
         label      = self.labels[top_idx] if top_idx < len(self.labels) else f"class_{top_idx}"
         return label, confidence, self._top3(probs)
 
-    def vote(self, frames: list[np.ndarray]) -> VoteResult | None:
+    def vote(self, frame_paths: list[str]) -> VoteResult | None:
         """
         Classify every Nth frame (CLASSIFY_EVERY_N_FRAMES) from a burst and
         aggregate the results into a single winning prediction.
 
-        Strategy:
-          - For each sampled frame that passes the texture check, run inference.
-          - Accumulate (label -> total_confidence) as a weighted vote.
-          - The label with the highest total confidence wins.
-          - Track the best single-frame result for the top_3 field (used on
-            the website's detail modal).
-          - Require at least MIN_VOTES_REQUIRED agreeing frames; if fewer
-            frames were classifiable, return None.
+        Accepts file paths rather than numpy arrays so frames are loaded one
+        at a time and RAM stays flat regardless of burst length.
 
         Args:
-            frames: list of BGR numpy arrays at GIF resolution (already
-                    ROI-cropped - the caller should pass apply_roi() results
-                    or the full GIF frames; we re-apply the ROI crop here
-                    since GIF frames are already resized).
+            frame_paths: list of JPEG paths from frame_capture.record_visit().
 
         Returns:
-            VoteResult or None if classification confidence is too low.
+            VoteResult or None if not enough frames passed the texture check.
         """
-        if not frames:
+        if not frame_paths:
             return None
 
-        # Sample every Nth frame to stay lightweight on the Pi
-        n           = config.CLASSIFY_EVERY_N_FRAMES
-        sampled     = frames[::n]
+        n       = config.CLASSIFY_EVERY_N_FRAMES
+        sampled = frame_paths[::n]
+
         votes: dict[str, float] = defaultdict(float)
         best_top3:  list        = []
         best_conf   = 0.0
         frame_count = 0
 
-        for frame in sampled:
-            result = self.classify_frame(frame)
+        for path in sampled:
+            frame = cv2.imread(path)
+            if frame is None:
+                continue
+            roi    = motion_detect.apply_roi(frame)
+            del frame
+            result = self.classify_frame(roi)
+            del roi
             if result is None:
-                continue   # too smooth = skip
+                continue
             label, conf, top3 = result
             votes[label] += conf
             frame_count   += 1
@@ -215,12 +213,10 @@ class BirdClassifier:
                 best_top3 = top3
 
         if frame_count < config.MIN_VOTES_REQUIRED:
-            # Not enough frames passed the texture check to trust any result
             return None
 
-        # Winning label = highest accumulated confidence
         winning_label = max(votes, key=votes.__getitem__)
-        avg_conf      = votes[winning_label] / frame_count   # normalise by frames checked
+        avg_conf      = votes[winning_label] / frame_count
 
         return VoteResult(
             label       = winning_label,
