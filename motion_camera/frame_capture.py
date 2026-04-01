@@ -12,6 +12,7 @@ of the pipeline needs no conversion.
 This module does NOT print anything —-main.py handles all terminal output.
 """
 
+import os
 import time
 import numpy as np
 from picamera2 import Picamera2
@@ -49,6 +50,7 @@ _camera: Picamera2 | None = None
 
 def open_camera() -> None:
     """Open and warm up the camera. Call once at startup."""
+    os.environ["LIBCAMERA_LOG_LEVELS"] = "3" # comment to enable picamera2 debug logs
     global _camera
     if _camera is None:
         _camera = _make_camera()

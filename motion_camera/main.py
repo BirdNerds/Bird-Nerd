@@ -213,10 +213,9 @@ def main() -> None:
                 prev_roi = current_roi
                 # Print a heartbeat every 60 checks (~24 s at 0.4 s interval)
                 if check_count % 60 == 0:
-                    elapsed_min = (time.monotonic() - program_start) / 60
-                    print(f"  Monitoring... "
-                          f"{elapsed_min:.1f} min elapsed, "
-                          f"{visit_count} visit(s) recorded.")
+                    elapsed_sec = int(time.monotonic() - program_start)
+                    elapsed_str = f"{elapsed_sec // 60}:{elapsed_sec % 60:02d}"
+                    print(f"  Monitoring... {elapsed_str} elapsed, {visit_count} visit(s) recorded.")
                 continue
 
             # ---- Motion detected — start a visit -------------------------
