@@ -27,12 +27,12 @@ CAPTURE_WIDTH  = 2592
 CAPTURE_HEIGHT = 1944
 
 # GIF output resolution (, keeps file sizes reasonable on 1 GB Pi)
-GIF_WIDTH  = 1024
-GIF_HEIGHT = 768
+GIF_WIDTH  = 640
+GIF_HEIGHT = 480
 
 # Frames per second during a bird visit burst capture
 # picamera2 can comfortably do ~8 fps at GIF resolution on a Pi 4
-BURST_FPS = 8
+BURST_FPS = 6
 
 # ---------------------------------------------------------------------------
 # Region of Interest (ROI)
@@ -65,7 +65,7 @@ NO_MOTION_TIMEOUT = 4.0    # seconds
 
 # Hard cap on a single visit's GIF length regardless of motion.
 # IRL window-feeder visits are typically 5 to 25 seconds
-MAX_VISIT_DURATION = 15.0  # seconds
+MAX_VISIT_DURATION = 10.0  # seconds
 
 # Brief pause between motion-check frames when no visit is active.
 IDLE_CHECK_INTERVAL = 0.4  # seconds

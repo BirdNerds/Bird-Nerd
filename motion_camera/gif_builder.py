@@ -92,7 +92,7 @@ def build(
     if first_bgr is None:
         raise ValueError(f"Could not read first frame: {frame_paths[0]}")
 
-    first_pil = _bgr_to_pil(first_bgr).quantize(method=Image.Quantize.MEDIANCUT)
+    first_pil = _bgr_to_pil(first_bgr).quantize(method=Image.Quantize.FASTOCTREE)
     del first_bgr
 
     rest: list[Image.Image] = []
@@ -100,7 +100,7 @@ def build(
         bgr = cv2.imread(path)
         if bgr is None:
             continue
-        rest.append(_bgr_to_pil(bgr).quantize(method=Image.Quantize.MEDIANCUT))
+        rest.append(_bgr_to_pil(bgr).quantize(method=Image.Quantize.FASTOCTREE))
         del bgr
 
     first_pil.save(

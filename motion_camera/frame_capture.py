@@ -23,7 +23,7 @@ import threading
 import numpy as np
 from picamera2 import Picamera2
 import cv2
-
+from libcamera import controls as lc
 import config
 
 os.environ["LIBCAMERA_LOG_LEVELS"] = "3"
@@ -48,10 +48,9 @@ def open_camera() -> None:
     _camera.configure(still_cfg)
     _camera.start()
     time.sleep(2.0)
-    _camera.set_controls({"AwbEnable": False, "AwbMode": 1})  # lock auto white balance after warmup
+    # _camera.set_controls({"AwbEnable": False, "AwbMode": 1})  # lock auto white balance after warmup
     # Can also try:
-    # _camera.set_controls({"AwbMode": lc.AwbModeEnum.Daylight}) # Looking through a window, so daylight white balance is more consistent than auto
-
+    _camera.set_controls({"AwbMode": lc.AwbModeEnum.Daylight}) # Looking through a window, so daylight white balance is more consistent than auto
 
 def close_camera() -> None:
     """Release the camera. Call on clean shutdown."""
