@@ -50,7 +50,16 @@ def open_camera() -> None:
     time.sleep(2.0)
     # _camera.set_controls({"AwbEnable": False, "AwbMode": 1})  # lock auto white balance after warmup
     # Can also try:
-    _camera.set_controls({"AwbMode": lc.AwbModeEnum.Daylight}) # Looking through a window, so daylight white balance is more consistent than auto
+    #_camera.set_controls({"AwbMode": lc.AwbModeEnum.Daylight}) # Looking through a window, so daylight white balance is more consistent than auto
+    # Capture whatever gains AWB settled on, then lock them so color
+    # stays consistent across the whole session regardless of lighting changes
+    metadata = _camera.capture_metadata()
+    colour_gains = metadata.get("ColourGains")
+    if colour_gains:
+        _camera.set_controls({
+            "AwbEnable": False,
+            "ColourGains": colour_gains
+        })  
 
 def close_camera() -> None:
     """Release the camera. Call on clean shutdown."""
