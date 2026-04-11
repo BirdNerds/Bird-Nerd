@@ -191,6 +191,7 @@ class BirdClassifier:
         sampled = frame_paths[::n]
 
         votes: dict[str, float] = defaultdict(float)
+        vote_counts: dict[str, int]  = defaultdict(int)
         best_top3:  list        = []
         best_conf   = 0.0
         frame_count = 0
@@ -207,6 +208,7 @@ class BirdClassifier:
                 continue
             label, conf, top3 = result
             votes[label] += conf
+            vote_counts[label] += 1
             frame_count   += 1
             if conf > best_conf:
                 best_conf = conf
@@ -216,7 +218,7 @@ class BirdClassifier:
             return None
 
         winning_label = max(votes, key=votes.__getitem__)
-        avg_conf      = votes[winning_label] / frame_count
+        avg_conf = votes[winning_label] / vote_counts[winning_label]
 
         return VoteResult(
             label       = winning_label,
