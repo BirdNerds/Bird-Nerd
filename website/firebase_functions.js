@@ -303,8 +303,8 @@ function formatTimestamp(timestamp, timezone) {
 
     // Fall back to America/New_York if timezone is an offset like "UTC-4"
     // which browsers don't accept as a valid IANA timezone
-    const safeTimezone = (timezone && !timezone.startsWith('UTC')) 
-        ? timezone 
+    const safeTimezone = (timezone && !timezone.startsWith('UTC'))
+        ? timezone
         : 'America/New_York';
 
     const options = {
@@ -514,19 +514,6 @@ function openBirdModal(sighting) {
     document.getElementById('bird-modal-alltime').textContent = allTime;
     document.getElementById('bird-modal-30days').textContent  = last30;
     document.getElementById('bird-modal-7days').textContent   = last7;
-
-    const predList = document.getElementById('bird-modal-predictions');
-    predList.innerHTML = '';
-    const formattedPredictions = formatTopPredictions(sighting.top_3_predictions);
-    if (formattedPredictions && formattedPredictions.length > 0) {
-        formattedPredictions.forEach((pred, idx) => {
-            const li = document.createElement('li');
-            li.textContent = `${idx + 1}. ${pred.label} (${pred.confidence}%)`;
-            predList.appendChild(li);
-        });
-    } else {
-        predList.innerHTML = '<li>No predictions available</li>';
-    }
 
     const ebirdLink = document.getElementById('bird-modal-ebird');
     ebirdLink.href = 'https://ebird.org/home';

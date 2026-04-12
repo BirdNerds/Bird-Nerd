@@ -315,7 +315,7 @@ body {
 .actions-header {
     width: 100px;
     text-align: center;
-    display: none; /* Hidden by default, shown when admin logs in */
+    display: none; /* Hidden by default, shown when user admin logs in */
 }
 
 /* ============================================================

@@ -7,8 +7,6 @@ of burst length.
 Public API
 ----------
   gif_path, thumb_path = build(frame_paths, label, thumb_dir, timestamp)
-
-No printing - main.py handles all terminal output.
 """
 
 import os
@@ -92,7 +90,7 @@ def build(
     if first_bgr is None:
         raise ValueError(f"Could not read first frame: {frame_paths[0]}")
 
-    first_pil = _bgr_to_pil(first_bgr).quantize(method=Image.Quantize.FASTOCTREE)
+    first_pil = _bgr_to_pil(first_bgr).quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=0)
     del first_bgr
 
     rest: list[Image.Image] = []
@@ -100,7 +98,7 @@ def build(
         bgr = cv2.imread(path)
         if bgr is None:
             continue
-        rest.append(_bgr_to_pil(bgr).quantize(method=Image.Quantize.FASTOCTREE))
+        rest.append(_bgr_to_pil(bgr).quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=0))
         del bgr
 
     first_pil.save(
