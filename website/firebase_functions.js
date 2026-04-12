@@ -27,7 +27,7 @@ try {
 // ============================================
 // PAGINATION STATE
 // ============================================
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 8;
 let currentPage = 1;
 let _cachedSightings = [];
 

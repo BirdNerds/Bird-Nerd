@@ -8,7 +8,7 @@ Public API
 ----------
   gif_path, thumb_path = build(frame_paths, label, thumb_dir, timestamp)
 
-No printing — main.py handles all terminal output.
+No printing - main.py handles all terminal output.
 """
 
 import os

@@ -52,7 +52,7 @@ def _print_header(firebase_ok: bool, model_ok: bool) -> None:
     print(f"  Log file  : {config.LOG_FILE}")
     print(f"  Images    : {config.IMAGES_DIR}")
     print(f"  GIFs      : {config.GIFS_DIR}")
-    print(f"  Model     : {'loaded' if model_ok else 'NOT FOUND — motion-only mode'}")
+    print(f"  Model     : {'loaded' if model_ok else 'NOT FOUND - motion-only mode'}")
     print(f"  Firebase  : {'connected' if firebase_ok else 'disabled'}")
     print(f"  ROI       : top={config.ROI_TOP:.0%}  bottom={config.ROI_BOTTOM:.0%}"
           f"  left={config.ROI_LEFT:.0%}  right={config.ROI_RIGHT:.0%}")
@@ -97,7 +97,7 @@ def _process_visit(
         print(f"{now_str}  Visit ended with no frames captured.")
         return
 
-    print(f"{now_str}  Visit ended — {len(frame_paths)} frames captured.")
+    print(f"{now_str}  Visit ended - {len(frame_paths)} frames captured.")
 
     # -- Classification (vote() loads frames from disk one at a time) -----
     result = None
@@ -182,7 +182,7 @@ def main() -> None:
         try:
             classifier = bird_classify.BirdClassifier()
         except Exception as e:
-            print(f"Model load failed: {e} — running in motion-only mode.")
+            print(f"Model load failed: {e} - running in motion-only mode.")
             model_ok = False
 
     _print_header(firebase_ok, model_ok)
@@ -190,11 +190,11 @@ def main() -> None:
     # -- Camera ------------------------------------------------------------
     frame_capture.open_camera()
     print("Camera warming up...")
-    time.sleep(1.0)
+    time.sleep(5.0)
 
     # Capture initial reference frame
     prev_roi = motion_detect.apply_roi(frame_capture.grab_frame())
-    print("Ready — monitoring for birds.\n")
+    print("Ready - monitoring for birds.\n")
 
     try:
         while True:
@@ -216,7 +216,7 @@ def main() -> None:
                           f"{visit_count} visit(s) recorded.")
                 continue
 
-            # ---- Motion detected — start a visit -------------------------
+            # ---- Motion detected - start a visit -------------------------
             visit_start = datetime.now(config.LOCAL_TIMEZONE)
             now_str     = visit_start.strftime("%H:%M:%S")
             print(f"{now_str}  Motion detected (area={area:.0f} px).  Recording visit...")
@@ -258,7 +258,7 @@ def main() -> None:
                     last_frame_count    = current_frame_count
                     last_new_frame_time = time.monotonic()
                 elif time.monotonic() - last_new_frame_time >= config.NO_MOTION_TIMEOUT:
-                    break   # no new frames written — bird likely gone
+                    break   # no new frames written - bird likely gone
 
             stop_event.set()
             recorder_thread.join(timeout=5.0)

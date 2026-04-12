@@ -29,7 +29,7 @@ import config
 os.environ["LIBCAMERA_LOG_LEVELS"] = "3"
 
 _camera: Picamera2 | None = None
-# Dedicated temp directory for burst frames — wiped on each new visit
+# Dedicated temp directory for burst frames - wiped on each new visit
 _TEMP_DIR = "/tmp/bird_nerd_burst"
 
 
@@ -47,19 +47,19 @@ def open_camera() -> None:
     )
     _camera.configure(still_cfg)
     _camera.start()
-    time.sleep(2.0)
+    time.sleep(5.0)
     # _camera.set_controls({"AwbEnable": False, "AwbMode": 1})  # lock auto white balance after warmup
     # Can also try:
     #_camera.set_controls({"AwbMode": lc.AwbModeEnum.Daylight}) # Looking through a window, so daylight white balance is more consistent than auto
     # Capture whatever gains AWB settled on, then lock them so color
     # stays consistent across the whole session regardless of lighting changes
-    metadata = _camera.capture_metadata()
-    colour_gains = metadata.get("ColourGains")
-    if colour_gains:
-        _camera.set_controls({
-            "AwbEnable": False,
-            "ColourGains": colour_gains
-        })  
+    # metadata = _camera.capture_metadata()
+    # colour_gains = metadata.get("ColourGains")
+    # if colour_gains:
+    #     _camera.set_controls({
+    #         "AwbEnable": False,
+    #         "ColourGains": colour_gains
+    #     })  
 
 def close_camera() -> None:
     """Release the camera. Call on clean shutdown."""
@@ -77,7 +77,7 @@ def grab_frame() -> np.ndarray:
     Always uses the still configuration - resolution is always consistent.
     """
     if _camera is None:
-        raise RuntimeError("Camera not open — call open_camera() first.")
+        raise RuntimeError("Camera not open - call open_camera() first.")
     rgb = _camera.capture_array("main")
     return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
 
@@ -102,7 +102,7 @@ def record_visit(stop_event: threading.Event) -> list[str]:
     Peak RAM during capture: ~1 frame = 1280*960*3 bytes ~ 3.5 MB.
 
     Args:
-        stop_event: threading.Event — set by the caller when the bird leaves.
+        stop_event: threading.Event - set by the caller when the bird leaves.
 
     Returns:
         List of absolute paths to JPEG files in _TEMP_DIR.
@@ -163,7 +163,7 @@ def load_frames(paths: list[str]) -> list[np.ndarray]:
     """
     Read JPEG frames back from disk as BGR numpy arrays.
     Used by gif_builder and bird_classify when they need raw pixel data.
-    Loads one at a time — caller should not hold the entire list in memory
+    Loads one at a time - caller should not hold the entire list in memory
     longer than necessary.
     """
     frames = []

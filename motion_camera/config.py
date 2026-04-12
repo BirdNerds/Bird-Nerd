@@ -91,6 +91,27 @@ MIN_VOTES_REQUIRED = 2
 LAP_VAR_THRESHOLD = 18.0
 
 # ---------------------------------------------------------------------------
+# Image preprocessing - CLAHE
+# Applied to every frame before TFLite inference to improve accuracy under
+# tricky lighting (colour casts, backlit birds, sunrise/overcast glare).
+#
+# CLAHE (Contrast Limited Adaptive Histogram Equalization) operates on the
+# luminance channel in LAB colour space so it boosts local contrast without
+# distorting hue or saturation.
+#
+# CLAHE_CLIP_LIMIT   - controls how aggressively contrast is boosted.
+#                      2.0  = conservative, safe default
+#                      3.0  = stronger correction, good for colour-cast frames
+#                      4.0  = aggressive; use if 3.0 still looks washed out
+#
+# CLAHE_TILE_SIZE    - grid size for local equalization (width, height).
+#                      (8, 8) is the standard starting point. Smaller tiles
+#                      = more localised correction but can introduce artifacts.
+# ---------------------------------------------------------------------------
+CLAHE_CLIP_LIMIT = 3.0
+CLAHE_TILE_SIZE  = (8, 8)
+
+# ---------------------------------------------------------------------------
 # Timezone
 # ---------------------------------------------------------------------------
 LOCAL_TIMEZONE = pytz.timezone("America/New_York")  # adjust if you move

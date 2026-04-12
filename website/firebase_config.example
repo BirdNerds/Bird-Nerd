@@ -1,7 +1,7 @@
 // Copy this file to firebase_config.js and fill in your values:
 //   cp firebase_config.example.js firebase_config.js
 //
-// firebase_config.js is gitignored — never commit it.
+// firebase_config.js is gitignored - never commit it.
 //
 // Find these values in the Firebase Console:
 //   Project Settings -> Your apps -> Web app -> SDK setup and configuration

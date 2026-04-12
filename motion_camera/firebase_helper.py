@@ -19,7 +19,7 @@ load_dotenv()
 SERVICE_ACCOUNT_KEY = os.getenv('FIREBASE_CREDENTIALS_PATH', 
                                  '/home/tocila/Documents/Bird-Nerd/motion_camera/.credentials/bird-nerd-firebase-adminsdk.json')
 
-# Firebase Storage bucket name (from your Firebase console — projectId.appspot.com)
+# Firebase Storage bucket name (from your Firebase console - projectId.appspot.com)
 STORAGE_BUCKET = os.getenv('FIREBASE_STORAGE_BUCKET', 'bird-nerd-27eb1.firebasestorage.app')
 
 # Initialize Firebase (only once)
