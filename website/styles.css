@@ -18,14 +18,44 @@ body {
     position: relative;
 }
 
-/* Admin Controls */
-.admin-controls {
+/* ============================================================
+   TOP-RIGHT TOOLBAR
+   Houses: Pi status, About, Mute, Admin login/status
+   ============================================================ */
+.top-toolbar {
     position: absolute;
     top: 0;
     right: 0;
     z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
+/* Generic toolbar button */
+.toolbar-btn {
+    background-color: rgba(255,255,255,0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 7px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.88em;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.toolbar-btn:hover {
+    background-color: rgba(255,255,255,0.35);
+    border-color: rgba(255,255,255,0.55);
+}
+
+/* Keep old class name working (admin-btn is no longer in HTML but just in case) */
 .admin-btn {
     background-color: rgba(255,255,255,0.2);
     color: #ffffff;
@@ -45,19 +75,70 @@ body {
 .admin-status {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background-color: rgba(255,255,255,0.15);
-    padding: 8px 12px;
+    padding: 7px 12px;
     border-radius: 5px;
     border: 1px solid rgba(255,255,255,0.3);
 }
 
 #admin-username {
-    font-size: 0.9em;
+    font-size: 0.88em;
     color: #e8f5e9;
 }
 
-/* Login Modal */
+/* ============================================================
+   PI STATUS INDICATOR
+   ============================================================ */
+.pi-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 7px 12px;
+    border-radius: 5px;
+    font-size: 0.88em;
+    color: #e8f5e9;
+    white-space: nowrap;
+}
+
+.pi-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* Unknown / waiting for first heartbeat */
+.pi-dot.pi-unknown {
+    background-color: #bdbdbd;
+    box-shadow: none;
+}
+
+/* Connected - green with subtle pulse */
+.pi-dot.pi-connected {
+    background-color: #4caf50;
+    box-shadow: 0 0 6px rgba(76, 175, 80, 0.8);
+    animation: pi-pulse 2.4s ease-in-out infinite;
+}
+
+/* Disconnected - red, no animation */
+.pi-dot.pi-disconnected {
+    background-color: #f44336;
+    box-shadow: 0 0 6px rgba(244, 67, 54, 0.7);
+    animation: none;
+}
+
+@keyframes pi-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(76,175,80,0.6); }
+    50%       { box-shadow: 0 0 10px rgba(76,175,80,1); }
+}
+
+/* ============================================================
+   MODALS (shared base)
+   ============================================================ */
 .modal {
     display: none;
     position: fixed;
@@ -87,6 +168,58 @@ body {
     text-align: center;
 }
 
+/* ============================================================
+   ABOUT MODAL
+   ============================================================ */
+.about-modal-content {
+    max-width: 480px;
+}
+
+.about-text {
+    font-size: 0.93em;
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+
+.about-disclaimer {
+    background-color: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.88em;
+    color: #5d4037;
+    line-height: 1.55;
+    margin-bottom: 16px;
+}
+
+.about-links {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.about-link {
+    display: inline-block;
+    color: #547c38;
+    font-weight: 600;
+    font-size: 0.9em;
+    text-decoration: none;
+    padding: 7px 16px;
+    border: 2px solid #547c38;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.about-link:hover {
+    background: #547c38;
+    color: white;
+}
+
+/* ============================================================
+   LOGIN MODAL
+   ============================================================ */
 .form-group {
     margin-bottom: 15px;
 }
@@ -156,7 +289,9 @@ body {
     background-color: #d0d0d0;
 }
 
-/* Delete Button in Table */
+/* ============================================================
+   DELETE BUTTON IN TABLE
+   ============================================================ */
 .delete-btn {
     background-color: #f44336;
     color: white;
@@ -183,6 +318,9 @@ body {
     display: none; /* Hidden by default, shown when admin logs in */
 }
 
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
 h1 {
     text-align: center;
     margin-bottom: 10px;
@@ -193,10 +331,13 @@ h1 {
 .subtitle {
     text-align: center;
     color: #e8f5e9;
-    margin-bottom: 30px;
+    margin-bottom: 14px;
     font-size: 1.2em;
 }
 
+/* ============================================================
+   STATS
+   ============================================================ */
 .stats {
     background-color: rgba(255,255,255,0.1);
     border-radius: 10px;
@@ -235,6 +376,9 @@ h1 {
     margin-top: 5px;
 }
 
+/* ============================================================
+   LOADING / ERROR
+   ============================================================ */
 .loading {
     text-align: center;
     padding: 40px;
@@ -251,6 +395,9 @@ h1 {
     text-align: center;
 }
 
+/* ============================================================
+   TABLE
+   ============================================================ */
 .table-container {
     background-color: rgba(255,255,255,0.95);
     border-radius: 10px;
@@ -290,6 +437,10 @@ tbody tr:nth-child(even) {
     background-color: #fafafa;
 }
 
+#sightings-table tbody tr:hover {
+    background-color: #edf5e8 !important;
+}
+
 .confidence {
     font-weight: bold;
 }
@@ -323,25 +474,6 @@ tbody tr:nth-child(even) {
     padding: 40px;
     color: #999;
     font-size: 1.1em;
-}
-
-@media (max-width: 768px) {
-    h1 {
-        font-size: 2em;
-    }
-
-    .table-container {
-        padding: 10px;
-    }
-
-    th, td {
-        padding: 8px 5px;
-        font-size: 0.9em;
-    }
-
-    .top-predictions {
-        display: none;
-    }
 }
 
 /* ============================================================
@@ -428,6 +560,28 @@ tbody tr:nth-child(even) {
     padding: 40px 20px;
     text-align: center;
     font-size: 1em;
+}
+
+/* Download GIF button row */
+.bird-modal-download-wrap {
+    padding: 0px 22px 0;
+}
+
+.bird-modal-download-btn {
+    flex: unset;
+    font-size: 0.88em;
+    padding: 7px 16px;
+    border-radius: 6px;
+    background-color: #e8f5e9;
+    color: #3d5a2a;
+    border: 1px solid #a5d6a7;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bird-modal-download-btn:hover {
+    background-color: #c8e6c9;
+    border-color: #81c784;
 }
 
 .bird-modal-common {
@@ -529,10 +683,6 @@ tbody tr:nth-child(even) {
     color: white;
 }
 
-#sightings-table tbody tr:hover {
-    background-color: #edf5e8 !important;
-}
-
 /* ============================================================
    PAGINATION
    ============================================================ */
@@ -599,4 +749,35 @@ tbody tr:nth-child(even) {
     font-size: 0.85em;
     color: #666;
     white-space: nowrap;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2em;
+    }
+
+    .table-container {
+        padding: 10px;
+    }
+
+    th, td {
+        padding: 8px 5px;
+        font-size: 0.9em;
+    }
+
+    .top-predictions {
+        display: none;
+        padding-top: 8px;
+    }
+
+    .top-toolbar {
+        gap: 5px;
+    }
+
+    .pi-label {
+        display: none; /* Show dot only on small screens */
+    }
 }

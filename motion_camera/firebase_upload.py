@@ -172,3 +172,14 @@ def delete_sighting(doc_id: str) -> bool:
         return True
     except Exception:
         return False
+
+def send_heartbeat(alive: bool) -> None:
+    """Write a heartbeat document to Firestore for the Pi status indicator."""
+    try:
+        db = firestore.client()
+        db.collection('heartbeat').document('status').set({
+            'alive':     alive,
+            'timestamp': firestore.SERVER_TIMESTAMP,
+        })
+    except Exception as e:
+        print(f"Heartbeat write failed: {e}")

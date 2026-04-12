@@ -16,17 +16,35 @@
 
 <body>
   <div class="container">
-    <!-- Admin Controls -->
-    <div class="admin-controls">
-      <button id="admin-login-btn" class="admin-btn">Log in</button>
+
+    <!-- =====================================================
+         TOP-RIGHT TOOLBAR
+         Contains: Pi status, About button, Mute button, Admin
+         ===================================================== -->
+    <div class="top-toolbar">
+
+      <!-- Pi connection indicator -->
+      <div class="pi-status" id="pi-status" title="Raspberry Pi connection status">
+        <span class="pi-dot" id="pi-dot"></span>
+        <span class="pi-label" id="pi-label">Pi: Checking…</span>
+      </div>
+
+      <!-- About button -->
+      <button class="toolbar-btn" id="about-btn" title="About Bird Nerd">About</button>
+
+      <!-- Mute button (hidden until first new-bird sound would play) -->
+      <button class="toolbar-btn" id="mute-btn" title="Mute bird sounds">🔊</button>
+
+      <!-- Admin controls (existing, now inside toolbar) -->
+      <button id="admin-login-btn" class="toolbar-btn">Log in</button>
       <div id="admin-status" class="admin-status" style="display: none;">
         <span id="admin-username"></span>
-        <button id="admin-logout-btn" class="admin-btn">Logout</button>
+        <button id="admin-logout-btn" class="toolbar-btn">Logout</button>
       </div>
     </div>
 
     <h1>Bird Nerd</h1>
-    <div class="subtitle">Live Bird Sightings from jt42's Backyard</div>
+    <div class="subtitle">Live Bird Sightings from Tocila's Backyard</div>
 
     <div class="stats">
       <h2>Statistics</h2>
@@ -75,7 +93,9 @@
     </div>
   </div>
 
-  <!-- Login Modal -->
+  <!-- =====================================================
+       LOGIN MODAL
+       ===================================================== -->
   <div id="login-modal" class="modal" style="display: none;">
     <div class="modal-content">
       <h2>Login</h2>
@@ -97,13 +117,58 @@
     </div>
   </div>
 
+  <!-- =====================================================
+       ABOUT MODAL
+       ===================================================== -->
+  <div id="about-modal" class="modal" style="display: none;">
+    <div class="modal-content about-modal-content">
+      <h2>What is Bird Nerd?</h2>
 
-  <!-- Bird Detail Modal -->
+      <p class="about-text">
+        Bird Nerd is a real-time backyard bird identification system built with a
+        Raspberry Pi, a window-mounted camera, and a custom TensorFlow Lite model.
+        When motion is detected at the feeder, a short burst of frames is captured,
+        classified, and uploaded here automatically.
+      </p>
+
+      <p class="about-text">
+        The classifier uses a multi-frame voting system - several frames from each
+        visit are independently classified and the winning species is determined by
+        plurality, with confidence averaged across agreeing frames.
+      </p>
+
+      <p class ="about-text">
+        This was developed by Jacob Tocila as the senior design project for his
+        Computer Science degree at Calvin University.
+      </p>
+
+      <div class="about-disclaimer">
+        <strong>AI Disclaimer</strong><br>
+        Species identification is performed by a machine learning model and
+        <em>may be incorrect</em>. Confidence scores reflect model certainty,
+        not biological accuracy. Always verify with your own eyes or consult a real bird nerd!
+      </div>
+
+      <div class="about-links">
+        <a href="https://github.com/BirdNerds/Bird-Nerd" target="_blank" rel="noopener" class="about-link">GitHub Repo →</a>
+        <a href="https://ebird.org/home" target="_blank" rel="noopener" class="about-link">eBird →</a>
+        <a href="https://calvin.edu" target="_blank" rel="noopener" class="about-link">calvin.edu →</a>
+      </div>
+
+      <div class="modal-buttons" style="margin-top: 20px;">
+        <button type="button" id="close-about" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       BIRD DETAIL MODAL
+       ===================================================== -->
   <div id="bird-modal" class="modal" style="display: none;">
     <div class="modal-content bird-modal-content">
       <button class="bird-modal-close" aria-label="Close">&times;</button>
 
-      <!-- Image -->
+      <!-- Image / GIF -->
       <div class="bird-modal-image-wrap">
         <img id="bird-modal-img" src="" alt="Bird sighting" class="bird-modal-img" />
         <!-- GIF playback (shown instead of still when gif_url exists) -->
@@ -136,6 +201,11 @@
         </div>
       </div>
 
+      <!-- Download GIF button (only shown when a GIF is available) -->
+      <div class="bird-modal-download-wrap" id="bird-modal-download-wrap" style="display:none;">
+        <button id="bird-modal-download-btn" class="btn btn-secondary bird-modal-download-btn">⬇ Download GIF</button>
+      </div>
+
       <!-- Top 3 predictions -->
       <div class="bird-modal-predictions-wrap">
         <h3>Top 3 Predictions</h3>
@@ -143,7 +213,6 @@
       </div>
 
       <!-- eBird link -->
-      <!-- TODO: Add links to bird specific website -->
       <p class="bird-modal-ebird-wrap">
         <a id="bird-modal-ebird" href="https://ebird.org/home" target="_blank" rel="noopener">
           Learn more on eBird &rarr;
@@ -151,6 +220,9 @@
       </p>
     </div>
   </div>
+
+  <!-- Bird chirp sound (place your .wav file in the website/ directory) -->
+  <audio id="bird-chirp" src="bird_chirp.wav" preload="auto"></audio>
 
   <script type="module" src="./firebase_functions.js"></script>
 

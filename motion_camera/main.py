@@ -195,6 +195,8 @@ def main() -> None:
     # Capture initial reference frame
     prev_roi = motion_detect.apply_roi(frame_capture.grab_frame())
     print("Ready - monitoring for birds.\n")
+    if firebase_ok:
+        firebase_upload.send_heartbeat(alive=True)
 
     try:
         while True:
@@ -214,6 +216,9 @@ def main() -> None:
                     print(f"  Monitoring... "
                           f"{elapsed_min:.1f} min elapsed, "
                           f"{visit_count} visit(s) recorded.")
+                    if firebase_ok:
+                        firebase_upload.send_heartbeat(alive=True)
+
                 continue
 
             # ---- Motion detected - start a visit -------------------------
@@ -280,6 +285,8 @@ def main() -> None:
         print(f"  Checks     : {check_count}")
         print(f"  Visits     : {visit_count}")
         print("=" * 60)
+        if firebase_ok:
+            firebase_upload.send_heartbeat(alive = False)
 
     except Exception as e:
         import traceback
