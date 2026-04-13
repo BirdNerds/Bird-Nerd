@@ -14,3 +14,9 @@ export const firebaseConfig = {
     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
     appId: "YOUR_APP_ID"
 };
+
+// Customize the website subtitle.
+// Displayed as "Live Bird Sightings from {ownerName}'s Backyard"
+export const siteConfig = {
+    ownerName: "your-name-here",
+};

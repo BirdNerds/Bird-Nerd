@@ -15,23 +15,31 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    position: relative;
 }
 
 /* ============================================================
-   TOP-RIGHT TOOLBAR
-   Houses: Pi status, About, Mute, Admin login/status
+   TOP NAVBAR
+   Full-width bar above the title. Pi indicator left,
+   admin on the right — no absolute positioning, no overlap ever.
    ============================================================ */
 .top-toolbar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    background-color: rgba(0,0,0,0.18);
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 22px;
+}
+
+/* Right-side group: About, Mute, Admin */
+.toolbar-right {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    justify-content: flex-end;
 }
 
 /* Generic toolbar button */
@@ -53,23 +61,6 @@ body {
 .toolbar-btn:hover {
     background-color: rgba(255,255,255,0.35);
     border-color: rgba(255,255,255,0.55);
-}
-
-/* Keep old class name working (admin-btn is no longer in HTML but just in case) */
-.admin-btn {
-    background-color: rgba(255,255,255,0.2);
-    color: #ffffff;
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: all 0.3s ease;
-}
-
-.admin-btn:hover {
-    background-color: rgba(255,255,255,0.3);
-    border-color: rgba(255,255,255,0.5);
 }
 
 .admin-status {
@@ -94,10 +85,6 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background-color: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 7px 12px;
-    border-radius: 5px;
     font-size: 0.88em;
     color: #e8f5e9;
     white-space: nowrap;
@@ -111,20 +98,17 @@ body {
     transition: background-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* Unknown / waiting for first heartbeat */
 .pi-dot.pi-unknown {
     background-color: #bdbdbd;
     box-shadow: none;
 }
 
-/* Connected - green with subtle pulse */
 .pi-dot.pi-connected {
     background-color: #4caf50;
     box-shadow: 0 0 6px rgba(76, 175, 80, 0.8);
     animation: pi-pulse 2.4s ease-in-out infinite;
 }
 
-/* Disconnected - red, no animation */
 .pi-dot.pi-disconnected {
     background-color: #f44336;
     box-shadow: 0 0 6px rgba(244, 67, 54, 0.7);
@@ -134,188 +118,6 @@ body {
 @keyframes pi-pulse {
     0%, 100% { box-shadow: 0 0 4px rgba(76,175,80,0.6); }
     50%       { box-shadow: 0 0 10px rgba(76,175,80,1); }
-}
-
-/* ============================================================
-   MODALS (shared base)
-   ============================================================ */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.6);
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    max-width: 400px;
-    width: 90%;
-    color: #333;
-}
-
-.modal-content h2 {
-    color: #3d5a2a;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-/* ============================================================
-   ABOUT MODAL
-   ============================================================ */
-.about-modal-content {
-    max-width: 480px;
-}
-
-.about-text {
-    font-size: 0.93em;
-    color: #444;
-    line-height: 1.6;
-    margin-bottom: 14px;
-}
-
-.about-disclaimer {
-    background-color: #fff8e1;
-    border: 1px solid #ffe082;
-    border-radius: 6px;
-    padding: 12px 16px;
-    font-size: 0.88em;
-    color: #5d4037;
-    line-height: 1.55;
-    margin-bottom: 16px;
-}
-
-.about-links {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-bottom: 4px;
-}
-
-.about-link {
-    display: inline-block;
-    color: #547c38;
-    font-weight: 600;
-    font-size: 0.9em;
-    text-decoration: none;
-    padding: 7px 16px;
-    border: 2px solid #547c38;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-.about-link:hover {
-    background: #547c38;
-    color: white;
-}
-
-/* ============================================================
-   LOGIN MODAL
-   ============================================================ */
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: #3d5a2a;
-    font-weight: 600;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1em;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #547c38;
-    box-shadow: 0 0 0 2px rgba(84,124,56,0.2);
-}
-
-.login-error {
-    background-color: #ffebee;
-    color: #c62828;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    font-size: 0.9em;
-    border: 1px solid #ef9a9a;
-}
-
-.modal-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.btn {
-    flex: 1;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: all 0.3s ease;
-}
-
-.btn-primary {
-    background-color: #547c38;
-    color: white;
-}
-
-.btn-primary:hover {
-    background-color: #3d5a2a;
-}
-
-.btn-secondary {
-    background-color: #e0e0e0;
-    color: #333;
-}
-
-.btn-secondary:hover {
-    background-color: #d0d0d0;
-}
-
-/* ============================================================
-   DELETE BUTTON IN TABLE
-   ============================================================ */
-.delete-btn {
-    background-color: #f44336;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85em;
-    transition: background-color 0.3s ease;
-}
-
-.delete-btn:hover {
-    background-color: #d32f2f;
-}
-
-.actions-cell {
-    text-align: center;
-    width: 100px;
-}
-
-.actions-header {
-    width: 100px;
-    text-align: center;
-    display: none; /* Hidden by default, shown when user admin logs in */
 }
 
 /* ============================================================
@@ -331,7 +133,7 @@ h1 {
 .subtitle {
     text-align: center;
     color: #e8f5e9;
-    margin-bottom: 14px;
+    margin-bottom: 22px;
     font-size: 1.2em;
 }
 
@@ -429,44 +231,19 @@ td {
     border-bottom: 1px solid #ddd;
 }
 
-tbody tr:hover {
-    background-color: #f5f5f5;
-}
+tbody tr:hover { background-color: #f5f5f5; }
+tbody tr:nth-child(even) { background-color: #fafafa; }
+#sightings-table tbody tr:hover { background-color: #edf5e8 !important; }
 
-tbody tr:nth-child(even) {
-    background-color: #fafafa;
-}
-
-#sightings-table tbody tr:hover {
-    background-color: #edf5e8 !important;
-}
-
-.confidence {
-    font-weight: bold;
-}
-
-.confidence-high {
-    color: #4caf50;
-}
-
-.confidence-medium {
-    color: #ff9800;
-}
-
-.confidence-low {
-    color: #f44336;
-}
+.confidence { font-weight: bold; }
+.confidence-high   { color: #4caf50; }
+.confidence-medium { color: #ff9800; }
+.confidence-low    { color: #f44336; }
 
 .scientific-name {
     font-style: italic;
     color: #666;
     font-size: 0.9em;
-}
-
-.top-predictions {
-    font-size: 0.85em;
-    color: #777;
-    margin-top: 5px;
 }
 
 .no-data {
@@ -475,6 +252,24 @@ tbody tr:nth-child(even) {
     color: #999;
     font-size: 1.1em;
 }
+
+/* ============================================================
+   ADMIN / DELETE
+   ============================================================ */
+.delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover { background-color: #d32f2f; }
+.actions-cell   { text-align: center; width: 100px; }
+.actions-header { width: 100px; text-align: center; display: none; }
 
 /* ============================================================
    IMAGE PREVIEW (table column)
@@ -509,6 +304,140 @@ tbody tr:nth-child(even) {
 }
 
 /* ============================================================
+   MODALS (shared base)
+   ============================================================ */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    max-width: 400px;
+    width: 90%;
+    color: #333;
+}
+
+.modal-content h2 {
+    color: #3d5a2a;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary { background-color: #547c38; color: white; }
+.btn-primary:hover { background-color: #3d5a2a; }
+.btn-secondary { background-color: #e0e0e0; color: #333; }
+.btn-secondary:hover { background-color: #d0d0d0; }
+
+/* ============================================================
+   LOGIN MODAL
+   ============================================================ */
+.form-group { margin-bottom: 15px; }
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #3d5a2a;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #547c38;
+    box-shadow: 0 0 0 2px rgba(84,124,56,0.2);
+}
+
+.login-error {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    border: 1px solid #ef9a9a;
+}
+
+/* ============================================================
+   ABOUT MODAL
+   ============================================================ */
+.about-modal-content { max-width: 480px; }
+
+.about-text {
+    font-size: 0.93em;
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+
+.about-disclaimer {
+    background-color: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.88em;
+    color: #5d4037;
+    line-height: 1.55;
+    margin-bottom: 16px;
+}
+
+.about-links {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.about-link {
+    display: inline-block;
+    color: #547c38;
+    font-weight: 600;
+    font-size: 0.9em;
+    text-decoration: none;
+    padding: 7px 16px;
+    border: 2px solid #547c38;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.about-link:hover { background: #547c38; color: white; }
+
+/* ============================================================
    BIRD DETAIL MODAL
    ============================================================ */
 .bird-modal-content {
@@ -538,14 +467,9 @@ tbody tr:nth-child(even) {
     transition: background 0.2s;
 }
 
-.bird-modal-close:hover {
-    background: rgba(0,0,0,0.08);
-    color: #333;
-}
+.bird-modal-close:hover { background: rgba(0,0,0,0.08); color: #333; }
 
-.bird-modal-image-wrap {
-    background: transparent;
-}
+.bird-modal-image-wrap { background: transparent; }
 
 .bird-modal-img {
     width: 100%;
@@ -562,15 +486,17 @@ tbody tr:nth-child(even) {
     font-size: 1em;
 }
 
-/* Download GIF button row */
+/* Download GIF button — centered with breathing room */
 .bird-modal-download-wrap {
-    padding: 0px 22px 0;
+    display: flex;
+    justify-content: center;
+    padding: 14px 22px 0;
 }
 
 .bird-modal-download-btn {
     flex: unset;
     font-size: 0.88em;
-    padding: 7px 16px;
+    padding: 7px 20px;
     border-radius: 6px;
     background-color: #e8f5e9;
     color: #3d5a2a;
@@ -618,9 +544,7 @@ tbody tr:nth-child(even) {
     border-right: 1px solid #eee;
 }
 
-.bird-stat-box:last-child {
-    border-right: none;
-}
+.bird-stat-box:last-child { border-right: none; }
 
 .bird-stat-num {
     font-size: 1.9em;
@@ -634,35 +558,8 @@ tbody tr:nth-child(even) {
     margin-top: 3px;
 }
 
-.bird-modal-predictions-wrap {
-    margin: 0 22px 16px;
-}
-
-.bird-modal-predictions-wrap h3 {
-    font-size: 1em;
-    color: #3d5a2a;
-    margin-bottom: 8px;
-}
-
-.bird-modal-predictions-wrap ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.bird-modal-predictions-wrap ul li {
-    font-size: 0.88em;
-    color: #555;
-    padding: 4px 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.bird-modal-predictions-wrap ul li:last-child {
-    border-bottom: none;
-}
-
 .bird-modal-ebird-wrap {
-    margin: 0 22px 22px;
+    margin: 18px 22px 22px;
     text-align: center;
 }
 
@@ -678,10 +575,7 @@ tbody tr:nth-child(even) {
     transition: all 0.2s ease;
 }
 
-.bird-modal-ebird-wrap a:hover {
-    background: #547c38;
-    color: white;
-}
+.bird-modal-ebird-wrap a:hover { background: #547c38; color: white; }
 
 /* ============================================================
    PAGINATION
@@ -694,15 +588,8 @@ tbody tr:nth-child(even) {
     padding: 12px 4px;
 }
 
-#pagination-top .pagination {
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 12px;
-}
-
-#pagination-bottom .pagination {
-    border-top: 1px solid #ddd;
-    margin-top: 12px;
-}
+#pagination-top .pagination { border-bottom: 1px solid #ddd; margin-bottom: 12px; }
+#pagination-bottom .pagination { border-top: 1px solid #ddd; margin-top: 12px; }
 
 .page-btn {
     background-color: #ffffff;
@@ -732,10 +619,7 @@ tbody tr:nth-child(even) {
     cursor: default;
 }
 
-.page-btn[disabled] {
-    opacity: 0.35;
-    cursor: not-allowed;
-}
+.page-btn[disabled] { opacity: 0.35; cursor: not-allowed; }
 
 .page-ellipsis {
     color: #888;
@@ -755,29 +639,9 @@ tbody tr:nth-child(even) {
    RESPONSIVE
    ============================================================ */
 @media (max-width: 768px) {
-    h1 {
-        font-size: 2em;
-    }
-
-    .table-container {
-        padding: 10px;
-    }
-
-    th, td {
-        padding: 8px 5px;
-        font-size: 0.9em;
-    }
-
-    .top-predictions {
-        display: none;
-        padding-top: 8px;
-    }
-
-    .top-toolbar {
-        gap: 5px;
-    }
-
-    .pi-label {
-        display: none; /* Show dot only on small screens */
-    }
+    h1 { font-size: 2em; }
+    .table-container { padding: 10px; }
+    th, td { padding: 8px 5px; font-size: 0.9em; }
+    .top-toolbar { gap: 5px; }
+    .pi-label { display: none; }
 }

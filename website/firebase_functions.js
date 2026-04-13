@@ -5,7 +5,7 @@ import "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js";
-import { firebaseConfig } from "./firebase_config.js";
+import { firebaseConfig, siteConfig } from "./firebase_config.js";
 
 // ============================================
 // FIREBASE CONFIGURATION
@@ -18,6 +18,12 @@ try {
     db = firebase.firestore();
     auth = firebase.auth();
     console.log("Firebase initialized successfully");
+
+// Set subtitle from siteConfig
+if (siteConfig && siteConfig.ownerName) {
+    document.getElementById("site-subtitle").textContent =
+        `Live Bird Sightings from ${siteConfig.ownerName}'s Backyard`;
+}
 } catch (error) {
     console.error("Error initializing Firebase:", error);
     showError("Failed to connect to Firebase. Please check your configuration.");
@@ -281,7 +287,7 @@ function showMuteButton() {
 
 document.getElementById('mute-btn').addEventListener('click', () => {
     _muted = !_muted;
-    document.getElementById('mute-btn').textContent = _muted ? '🔇' : '🔊';
+    document.getElementById('mute-btn').textContent = _muted ? 'Bird sounds: OFF' : 'Bird sounds: ON';
 });
 
 // Show mute button immediately on page load
@@ -447,6 +453,17 @@ function updateStatistics(sightings) {
 
     const uniqueSpecies = new Set(sightings.map(s => s.scientific_name));
     document.getElementById('unique-species').textContent = uniqueSpecies.size;
+
+    // Count how many sightings have a timestamp from today in the local timezone
+    const today = new Date();
+    const seenToday = sightings.filter(s => {
+        if (!s.timestamp || !s.timestamp.toDate) return false;
+        const sightingDate = s.timestamp.toDate();
+        return sightingDate.getFullYear() === today.getFullYear() &&
+               sightingDate.getMonth() === today.getMonth() &&
+               sightingDate.getDate() === today.getDate();
+    }).length;
+    document.getElementById('seen-today').textContent = seenToday;
 
     if (sightings.length > 0) {
         const lastTime = getRelativeTime(sightings[0].timestamp);
