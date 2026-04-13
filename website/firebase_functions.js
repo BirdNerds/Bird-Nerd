@@ -5,13 +5,12 @@ import "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js";
 import "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js";
-import { firebaseConfig } from "./firebase_config.js";
+import { firebaseConfig, siteConfig } from "./firebase_config.js";
 
 // ============================================
 // FIREBASE CONFIGURATION
 // ============================================
 
-// Initialize Firebase
 let db;
 let auth;
 try {
@@ -19,6 +18,12 @@ try {
     db = firebase.firestore();
     auth = firebase.auth();
     console.log("Firebase initialized successfully");
+
+// Set subtitle from siteConfig
+if (siteConfig && siteConfig.ownerName) {
+    document.getElementById("site-subtitle").textContent =
+        `Live Bird Sightings from ${siteConfig.ownerName}'s Backyard`;
+}
 } catch (error) {
     console.error("Error initializing Firebase:", error);
     showError("Failed to connect to Firebase. Please check your configuration.");
@@ -27,7 +32,7 @@ try {
 // ============================================
 // PAGINATION STATE
 // ============================================
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 8;
 let currentPage = 1;
 let _cachedSightings = [];
 
@@ -168,6 +173,127 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================
+// ABOUT MODAL
+// ============================================
+
+document.getElementById('about-btn').addEventListener('click', () => {
+    document.getElementById('about-modal').style.display = 'flex';
+});
+
+document.getElementById('close-about').addEventListener('click', () => {
+    document.getElementById('about-modal').style.display = 'none';
+});
+
+document.getElementById('about-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'about-modal') {
+        document.getElementById('about-modal').style.display = 'none';
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('about-modal').style.display === 'flex') {
+        document.getElementById('about-modal').style.display = 'none';
+    }
+});
+
+// ============================================
+// PI HEARTBEAT INDICATOR
+// ============================================
+// main.py writes a heartbeat document to Firestore:
+//   collection: 'heartbeat', document: 'status'
+//   fields: { alive: bool, timestamp: Firestore server timestamp }
+//
+// The indicator turns green if alive === true AND the timestamp
+// is less than HEARTBEAT_TIMEOUT_MS old. Otherwise red.
+// A setInterval re-evaluates the already-received timestamp every
+// 30 seconds so the dot goes red if the Pi silently stops sending.
+
+const HEARTBEAT_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes
+
+let _lastHeartbeat = null; // { alive: bool, timestamp: Date }
+
+function updatePiIndicator() {
+    const dot   = document.getElementById('pi-dot');
+    const label = document.getElementById('pi-label');
+
+    if (!_lastHeartbeat) {
+        dot.className   = 'pi-dot pi-unknown';
+        label.textContent = 'Pi: Unknown';
+        return;
+    }
+
+    const age       = Date.now() - _lastHeartbeat.timestamp.getTime();
+    const fresh     = age < HEARTBEAT_TIMEOUT_MS;
+    const connected = _lastHeartbeat.alive && fresh;
+
+    if (connected) {
+        dot.className     = 'pi-dot pi-connected';
+        label.textContent = 'Pi: Online';
+    } else {
+        dot.className     = 'pi-dot pi-disconnected';
+        label.textContent = 'Pi: Offline';
+    }
+}
+
+function listenHeartbeat() {
+    if (!db) return;
+
+    db.collection('heartbeat').doc('status').onSnapshot((doc) => {
+        if (doc.exists) {
+            const data = doc.data();
+            const ts   = data.timestamp && data.timestamp.toDate
+                ? data.timestamp.toDate()
+                : null;
+            if (ts) {
+                _lastHeartbeat = { alive: data.alive === true, timestamp: ts };
+                updatePiIndicator();
+            }
+        } else {
+            // Document doesn't exist yet (placeholder state)
+            _lastHeartbeat = null;
+            updatePiIndicator();
+        }
+    }, (err) => {
+        console.warn("Heartbeat listener error:", err);
+    });
+
+    // Re-evaluate age every 30 seconds so the dot goes red if Pi goes silent
+    setInterval(updatePiIndicator, 30_000);
+}
+
+// ============================================
+// BIRD SOUND + MUTE
+// ============================================
+
+let _soundEnabled  = true;   // sound is always available from page load
+let _muted         = false;
+let _initialLoad   = true;   // suppress sound on first data load
+let _knownIds      = new Set();
+
+const _chirpAudio = document.getElementById('bird-chirp');
+
+function playBirdSound() {
+    if (_muted || !_soundEnabled) return;
+    _chirpAudio.currentTime = 0;
+    _chirpAudio.play().catch(() => {
+        // Autoplay blocked - browser requires a user gesture first.
+        // The sound will work after the user clicks anything on the page.
+    });
+}
+
+function showMuteButton() {
+    document.getElementById('mute-btn').style.display = 'inline-flex';
+}
+
+document.getElementById('mute-btn').addEventListener('click', () => {
+    _muted = !_muted;
+    document.getElementById('mute-btn').textContent = _muted ? 'Bird sounds: OFF' : 'Bird sounds: ON';
+});
+
+// Show mute button immediately on page load
+showMuteButton();
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 
@@ -183,8 +309,8 @@ function formatTimestamp(timestamp, timezone) {
 
     // Fall back to America/New_York if timezone is an offset like "UTC-4"
     // which browsers don't accept as a valid IANA timezone
-    const safeTimezone = (timezone && !timezone.startsWith('UTC')) 
-        ? timezone 
+    const safeTimezone = (timezone && !timezone.startsWith('UTC'))
+        ? timezone
         : 'America/New_York';
 
     const options = {
@@ -206,26 +332,22 @@ function getConfidenceClass(confidence) {
     return 'confidence-low';
 }
 
+// Format confidence to 2 decimal places.
+// Capped at 99.99 - a model prediction of 100% is never academically honest.
+// Floored at 0.01 so secondary predictions never display as 0.00%.
 function formatConfidence(confidence) {
-    let percent = Math.floor(confidence * 100 * 100) / 100;
-    return Math.min(percent, 99.99);
+    const percent = confidence * 100;
+    const capped  = Math.min(percent, 99.99);
+    const floored = Math.max(capped, 0.01);
+    return parseFloat(floored.toFixed(2));
 }
 
 function formatTopPredictions(predictions) {
     if (!predictions || predictions.length === 0) return predictions;
-
-    let formatted = predictions.map(pred => ({
+    return predictions.map(pred => ({
         ...pred,
         confidence: formatConfidence(pred.confidence)
     }));
-
-    if (formatted[0].confidence === 99.99) {
-        for (let i = 1; i < Math.min(3, formatted.length); i++) {
-            formatted[i].confidence = Math.max(formatted[i].confidence, 0.01);
-        }
-    }
-
-    return formatted;
 }
 
 function showError(message) {
@@ -288,7 +410,6 @@ function renderPagination(containerId) {
         return;
     }
 
-    // Always show first, last, current ± 1, with ellipses
     const pages = new Set();
     pages.add(1);
     pages.add(total);
@@ -333,6 +454,17 @@ function updateStatistics(sightings) {
     const uniqueSpecies = new Set(sightings.map(s => s.scientific_name));
     document.getElementById('unique-species').textContent = uniqueSpecies.size;
 
+    // Count how many sightings have a timestamp from today in the local timezone
+    const today = new Date();
+    const seenToday = sightings.filter(s => {
+        if (!s.timestamp || !s.timestamp.toDate) return false;
+        const sightingDate = s.timestamp.toDate();
+        return sightingDate.getFullYear() === today.getFullYear() &&
+               sightingDate.getMonth() === today.getMonth() &&
+               sightingDate.getDate() === today.getDate();
+    }).length;
+    document.getElementById('seen-today').textContent = seenToday;
+
     if (sightings.length > 0) {
         const lastTime = getRelativeTime(sightings[0].timestamp);
         document.getElementById('last-sighting').textContent = lastTime;
@@ -361,15 +493,33 @@ function openBirdModal(sighting) {
         return d && s.scientific_name === scientificName && (now - d) <= 7 * 86400000;
     }).length;
 
-    const modalImg  = document.getElementById('bird-modal-img');
-    const noImgText = document.getElementById('bird-modal-no-img');
-    if (sighting.image_url) {
+    const modalImg   = document.getElementById('bird-modal-img');
+    const modalGif   = document.getElementById('bird-modal-gif');
+    const noImgText  = document.getElementById('bird-modal-no-img');
+    const dlWrap     = document.getElementById('bird-modal-download-wrap');
+    const dlBtn      = document.getElementById('bird-modal-download-btn');
+
+    if (sighting.gif_url) {
+        modalGif.src = sighting.gif_url;
+        modalGif.style.display = 'block';
+        modalImg.style.display = 'none';
+        noImgText.style.display = 'none';
+
+        // Show download button and wire it up
+        dlWrap.style.display = 'block';
+        dlBtn.onclick = () => downloadGif(sighting.gif_url, sighting.timestamp);
+
+    } else if (sighting.image_url) {
         modalImg.src = sighting.image_url;
         modalImg.style.display = 'block';
+        modalGif.style.display = 'none';
         noImgText.style.display = 'none';
+        dlWrap.style.display = 'none';
     } else {
         modalImg.style.display = 'none';
+        modalGif.style.display = 'none';
         noImgText.style.display = 'block';
+        dlWrap.style.display = 'none';
     }
 
     document.getElementById('bird-modal-common').textContent     = sighting.common_name;
@@ -382,19 +532,6 @@ function openBirdModal(sighting) {
     document.getElementById('bird-modal-30days').textContent  = last30;
     document.getElementById('bird-modal-7days').textContent   = last7;
 
-    const predList = document.getElementById('bird-modal-predictions');
-    predList.innerHTML = '';
-    const formattedPredictions = formatTopPredictions(sighting.top_3_predictions);
-    if (formattedPredictions && formattedPredictions.length > 0) {
-        formattedPredictions.forEach((pred, idx) => {
-            const li = document.createElement('li');
-            li.textContent = `${idx + 1}. ${pred.label} (${pred.confidence}%)`;
-            predList.appendChild(li);
-        });
-    } else {
-        predList.innerHTML = '<li>No predictions available</li>';
-    }
-
     const ebirdLink = document.getElementById('bird-modal-ebird');
     ebirdLink.href = 'https://ebird.org/home';
     ebirdLink.textContent = `Learn more about ${sighting.common_name} on eBird`;
@@ -405,7 +542,43 @@ function openBirdModal(sighting) {
 function closeBirdModal() {
     document.getElementById('bird-modal').style.display = 'none';
     document.getElementById('bird-modal-img').src = '';
+    document.getElementById('bird-modal-gif').src = '';
 }
+
+// ============================================
+// GIF DOWNLOAD
+// ============================================
+
+async function downloadGif(gifUrl, timestamp) {
+    try {
+        const response = await fetch(gifUrl);
+        const blob = await response.blob();
+        const url  = URL.createObjectURL(blob);
+
+        // Build filename: bird-nerd-YYYY-MM-DD_HH-MM-SS.gif
+        let datePart = 'unknown';
+        if (timestamp && timestamp.toDate) {
+            const d = timestamp.toDate();
+            const pad = n => String(n).padStart(2, '0');
+            datePart = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+                     + `_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+        }
+        const filename = `bird-nerd-${datePart}.gif`;
+
+        const a = document.createElement('a');
+        a.href     = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error("GIF download failed:", err);
+        alert("Could not download GIF. Try right-clicking the image and saving manually.");
+    }
+}
+
+// ============================================
+// MODAL EVENT LISTENERS
+// ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('bird-modal').addEventListener('click', (e) => {
@@ -430,7 +603,6 @@ function renderSightings(sightings) {
     const tbody = document.getElementById('sightings-body');
     tbody.innerHTML = '';
 
-    // Slice to current page
     const start = (currentPage - 1) * PAGE_SIZE;
     const pageSightings = sightings.slice(start, start + PAGE_SIZE);
 
@@ -481,7 +653,15 @@ function renderSightings(sightings) {
         // Image Preview
         const imageCell = document.createElement('td');
         imageCell.className = 'image-preview-cell';
-        if (sighting.image_url) {
+        if (sighting.gif_url) {
+            const gif = document.createElement('img');
+            gif.src = sighting.gif_url;
+            gif.alt = sighting.common_name;
+            gif.className = 'sighting-thumbnail';
+            gif.style.height = IMAGE_PREVIEW_HEIGHT_PX + 'px';
+            gif.loading = 'lazy';
+            imageCell.appendChild(gif);
+        } else if (sighting.image_url) {
             const img = document.createElement('img');
             img.src = sighting.image_url;
             img.alt = sighting.common_name;
@@ -534,7 +714,21 @@ function loadSightings() {
 
             console.log(`Loaded ${sightings.length} sightings`);
 
-            _allSightings = sightings;
+            // Detect genuinely new sightings (not the initial page load)
+            if (_initialLoad) {
+                // Populate known IDs silently on first load
+                sightings.forEach(s => _knownIds.add(s.id));
+                _initialLoad = false;
+            } else {
+                // Any ID we haven't seen before is a new arrival
+                const newOnes = sightings.filter(s => !_knownIds.has(s.id));
+                if (newOnes.length > 0) {
+                    newOnes.forEach(s => _knownIds.add(s.id));
+                    playBirdSound();
+                }
+            }
+
+            _allSightings  = sightings;
             _cachedSightings = sightings;
             currentPage = 1;
 
@@ -556,4 +750,5 @@ function loadSightings() {
 
 if (db) {
     loadSightings();
+    listenHeartbeat();
 }

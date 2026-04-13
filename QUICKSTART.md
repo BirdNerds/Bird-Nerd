@@ -1,4 +1,4 @@
-# Bird Nerd — Quick Start Guide (WIP)
+# Bird Nerd - Quick Start Guide (WIP)
 
 > **Bird Nerd** is an IoT bird feeder system that uses motion detection and on-device TensorFlow Lite inference to automatically identify bird species, log sightings to Firebase, and display them on a live website.
 
@@ -42,7 +42,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> **Note:** If `tflite-runtime` isn't available for your platform, install `tensorflow==2.20.0` instead — the code falls back automatically. A comment in `requirements.txt` explains this.
+> **Note:** If `tflite-runtime` isn't available for your platform, install `tensorflow==2.20.0` instead - the code falls back automatically. A comment in `requirements.txt` explains this.
 
 ---
 
@@ -53,7 +53,7 @@ The project uses [Google's AIY Vision Classifier Birds V1](https://www.kaggle.co
 You'll need a Kaggle account and API token first:
 
 1. Create a free account at [kaggle.com](https://www.kaggle.com)
-2. Go to **Account → Settings → API → Create New Token** — this downloads `kaggle.json`
+2. Go to **Account → Settings → API → Create New Token** - this downloads `kaggle.json`
 3. Place it on the Pi:
 
 ```bash
@@ -104,7 +104,7 @@ service cloud.firestore {
 }
 ```
 
-This allows anyone to read sightings publicly, restricts deletes to authenticated admin users (the `@birdnerd.local` domain used by the website's login), and blocks direct creates from the browser entirely — only the Pi's service account can write new sightings. Click **Publish**.
+This allows anyone to read sightings publicly, restricts deletes to authenticated admin users (the `@birdnerd.local` domain used by the website's login), and blocks direct creates from the browser entirely - only the Pi's service account can write new sightings. Click **Publish**.
 
 Do the same for **Storage → Rules**:
 
@@ -257,7 +257,7 @@ export const firebaseConfig = {
 
 Find all of these values in the Firebase Console under **Project Settings → Your apps → Web app → SDK setup and configuration**. If you haven't registered a web app yet, click **Add app → Web** and follow the prompts.
 
-> ⚠️ `firebase_config.js` is gitignored — never commit it. Only `firebase_config.example.js` (with placeholders) belongs in the repo.
+> ⚠️ `firebase_config.js` is gitignored - never commit it. Only `firebase_config.example.js` (with placeholders) belongs in the repo.
 
 ### 7b. Running Locally
 
@@ -267,11 +267,11 @@ python3 -m http.server 8080
 # Open http://localhost:8080 in your browser
 ```
 
-The site reads directly from Firebase, so all your sightings will appear even when running locally — no Pi required.
+The site reads directly from Firebase, so all your sightings will appear even when running locally - no Pi required.
 
 ### 7c. Hosting Publicly
 
-There are many free or inexpensive options: GitHub Pages, Netlify, Vercel, Firebase Hosting, or a university web server. The site is plain static HTML/JS and works on any of them. Just make sure `firebase_config.js` is present on the server (deploy it manually — don't commit it).
+There are many free or inexpensive options: GitHub Pages, Netlify, Vercel, Firebase Hosting, or a university web server. The site is plain static HTML/JS and works on any of them. Just make sure `firebase_config.js` is present on the server (deploy it manually - don't commit it).
 
 ---
 
@@ -315,7 +315,7 @@ Bird-Nerd/
 │   ├── index.html
 │   ├── styles.css
 │   ├── firebase_functions.js
-│   ├── firebase_config.example.js  # Committed — placeholders only
-│   └── firebase_config.js          # Gitignored — your real keys go here
+│   ├── firebase_config.example.js  # Committed - placeholders only
+│   └── firebase_config.js          # Gitignored - your real keys go here
 └── toy_model/              # Deprecated Ollama prototype, for fun
 ```
