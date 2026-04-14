@@ -1,101 +1,118 @@
 # Bird-Nerd
-CS 396/398: Senior Project - An IoT Bird Feeder with AI-Powered Species Identification 
+CS 396/398: Senior Project - An IoT Bird Feeder with AI-Powered Species Identification
+
+> **The live project website is at [https://students.cs.calvin.edu/~jt42/](https://students.cs.calvin.edu/~jt42/)** - Check out real-time sightings from the feeder here.
+
+---
 
 ## Vision
-Bird Nerd provides backyard bird watchers with an intelligent, automated tool that brings joy and discovery to nature enthusiasts. By utilizing AI-powered species identification with IoT monitoring, the system automatically recognizes visiting birds at the bird feeder, takes a snapshot, and shares images of sightings on social media. 
-This can help keep the birding community engaged with real-time wildlife updates. 
 
-The platform also serves as a practical companion for bird feeding, notifying the owner when uninvited guests (namely squirrels) appear, or when seed levels run low. Ultimately, Bird Nerd makes it effortless to connect with nature, learn about local bird species, and share the wonder of backyard birding with others.
+Bird Nerd is a real-time backyard bird identification system built with a Raspberry Pi 4, a window-mounted camera, and a TensorFlow Lite classifier running entirely on-device. When motion is detected at the feeder, a short burst of frames is captured, classified by species, and uploaded to a live website automatically. No cloud GPU or manual review.
+
+The classifier uses a multi-frame voting system. Several frames from each visit are independently classified using Google's AIY Birds V1 model (964 species), and the winning species is determined by plurality, with confidence averaged across agreeing frames. This makes the system substantially more reliable than single-frame inference, especially for fast-moving or partially obscured birds.
+
+Jacob is currently using this [Going Green window feeder](https://happybirdwatcher.com/products/going-green-window-feeder). Sightings are logged to Firebase and displayed on the website in real time. Note: bird species identification is performed by a machine learning model and may be incorrect. Confidence scores reflect model certainty, not biological accuracy.
+
+---
 
 ## Authors
-Jacob Tocila: 25, A senior at Calvin University majoring in computer science with minors in data science and Dutch studies. He is interested in information security, baking, and puzzles.
 
-Professor Derek C. Schuurman, current chair of the Calvin computer science department and the advisor for the project.  
+**Jacob Tocila** - A senior at Calvin University majoring in Computer Science with minors in Data Science and Dutch Studies. He is also working on a CompTIA Security+ certification at Calvin. He is interested in information security, birdwatching, IoT, and puzzles.
 
-Calvin University, Fall 2025 - Spring 2026
+**Professor Derek C. Schuurman** - Current chair of the Calvin University Computer Science department and project advisor.
 
-## Code
-The source code for our project can be found [on our GitHub](https://github.com/BirdNerds/Bird-Nerd).
+Calvin University, Fall 2025 – Spring 2026
 
-## Deliverables
+---
 
-### Report
-The report for our project can be found [in our Google Docs](https://docs.google.com/document/d/1ejYF54ZocJHBa88cmade4xO01HcAqiNkbfw3FI-FXoc/edit?tab=t.aa46uj7emtqj) documentation.
+## Links
 
-### Department of Computer Science website
-To learn more about our school's program, visit [Calvin University's CS department home page](https://calvin.edu/academics/school-stem/computer-science).
+- **Live website**: [https://students.cs.calvin.edu/~jt42/](https://students.cs.calvin.edu/~jt42/)
+- **Source code**: [github.com/BirdNerds/Bird-Nerd](https://github.com/BirdNerds/Bird-Nerd)
+- **Project report**: [Google Docs](https://docs.google.com/document/d/1ejYF54ZocJHBa88cmade4xO01HcAqiNkbfw3FI-FXoc/edit?tab=t.aa46uj7emtqj)
+- **Presentation slides**: [Google Slides](https://docs.google.com/presentation/d/1DoOasrh5okXjUorbduDV5vdW57nHWcixiS5i9uhj74Q/edit?usp=sharing)
+- **Calvin CS Department**: [calvin.edu/academics/school-stem/computer-science](https://calvin.edu/academics/school-stem/computer-science)
 
-### Presentation
-To visit the presentation slides we gave for this project, visit [our Google Slides](https://docs.google.com/presentation/d/1DoOasrh5okXjUorbduDV5vdW57nHWcixiS5i9uhj74Q/edit?usp=sharing). 
+---
 
-### Project Description
+## Hardware
 
-Bird Nerd combines computer vision with IoT monitoring to automatically identify bird species visiting a backyard feeder. The system uses motion detection to trigger image capture, then classifies birds using Google's AIY Birds V1 TensorFlow Lite model (964 species). Designed for deployment on resource-constrained edge devices, our system runs on a Raspberry Pi 4 with only 1GB RAM.
+- Raspberry Pi 4 (1 GB RAM)
+- Raspberry Pi Camera Module (X000VGJ8BL)
+- [Going Green Window Bird Feeder](https://happybirdwatcher.com/products/going-green-window-feeder) by Woodlink
+- MicroSD card (16 GB+)
+
+---
 
 ## Repository Structure
 
-- `README.md` - This file, providing an overview of the project
-- `QUICKSTART.md` - Step-by-step setup instructions for running the system on a Raspberry Pi
+```
+Bird-Nerd/
+├── motion_camera/          # Production system - runs on the Pi
+│   ├── main.py
+│   ├── config.py
+│   ├── bird_classify.py
+│   ├── frame_capture.py
+│   ├── motion_detect.py
+│   ├── gif_builder.py
+│   ├── firebase_upload.py
+│   ├── firebase_helper.py
+│   ├── sighting_log.py
+│   ├── setup_bird_model.py
+│   ├── convert_to_tflite.py
+│   ├── models/             # TFLite model + labels.txt (not committed)
+│   ├── images/             # High-confidence sighting stills (not committed)
+│   ├── unclear_images/     # Low-confidence sighting stills (not committed)
+│   └── sightings.log       # Local text log (not committed)
+└── website/                # Static frontend
+    ├── index.html
+    ├── styles.css
+    ├── firebase_functions.js
+    └── firebase_config.example.js
+```
 
 ### `motion_camera/`
-Production implementation using TensorFlow Lite for efficient on-device inference. Combines motion detection with real-time classification, optimized to run on Raspberry Pi 4.
 
-**Key files:**
-- `bird_ID_tflite.py` - Main detection and classification system
-- `setup_bird_model.py` - Downloads and configures the Google AIY model
-- `convert_to_tflite.py` - Model conversion utilities
-- `firebase_helper.py` - Manages Firestore client for live database reads/writes
-- `.env.example` - Example for .env file. Stores Firebase credential file path
-- `models/` - Stores TFLite model and label files
-- `images/` - Local copies of images taken by `motion_camera/main.py`
-- `.gitignore` - What not to commit
+The production system that runs on the Raspberry Pi.
+
+| File | Description |
+|---|---|
+| `main.py` | The main program - watches for motion, triggers photo capture, identifies the bird, and sends the result to Firebase. |
+| `config.py` | All settings in one place: camera resolution, detection sensitivity, confidence thresholds, file paths, and timing. |
+| `bird_classify.py` | Identifies the bird species by running the AI model across several frames from each visit and picking the most agreed-upon answer. |
+| `frame_capture.py` | Controls the camera - takes photos for motion checking and records short bursts of frames when a bird arrives. |
+| `motion_detect.py` | Watches a cropped section of the frame and flags when something moves that's the right size to be a bird. |
+| `gif_builder.py` | Turns the burst of captured frames into an animated GIF and picks the clearest single frame as the thumbnail photo. |
+| `firebase_upload.py` | Sends the sighting details, photo, and GIF to the cloud database so they appear on the website. |
+| `firebase_helper.py` | Used to send dummy fake birds to the Firebase database for testing purposes. |
+| `sighting_log.py` | Saves a plain-text record of each sighting to a local log file on the Pi. |
+| `setup_bird_model.py` | Downloads the bird identification AI model and species label list from Kaggle. |
+| `convert_to_tflite.py` | One-time utility for converting the original model file into the lightweight format the Pi uses. |
+| `models/` | Directory for the TFLite model file and its labels (not committed to Git). |
+| `.env` | Environment variables for Firebase credentials and other secrets (not committed to Git). |
 
 ### `website/`
-Static webpage for Bird Nerd
 
-**Key files:**
-- `index.html` - HTML for the website, hosted on [https://students.cs.calvin.edu/~jt42/](https://students.cs.calvin.edu/~jt42/)
-- `styles.css` - A .css file for the main page
-- `firebase_functions.js` - JavaScript for fetching data from Firestore and updating the webpage in real time
-- `firebase_config.example` - Example for firebase_config.js file. Stores firebaseConfig API key
-- `Robin_PCB.png` - Bird_Nerd logo image
-- `Robin_PCB_Favicon.png` - Favicon icon for website
-- `.gitignore` - What not to commit
+A static site that reads sightings from Firebase in real time and displays them publicly.
 
-### `toy_model/`
-Initial prototype using Ollama's llava:7b vision model for bird identification. This was a proof-of-concept to test accuracy and validate the project approach. Too slow and resource-intensive for deployment on Raspberry Pi (30+ seconds per image), but useful for initial testing on more powerful hardware. This is still in the Repo for fun.
+| File | Description |
+|---|---|
+| `index.html` | Main page - displays live sightings with species name, confidence, and photo. |
+| `styles.css` | Stylesheet for the main page. |
+| `firebase_functions.js` | Queries Firestore for new sightings and updates the page in real time. |
+| `firebase_config.example.js` | Template for the Firebase web app configuration (real config is gitignored). |
+| `bird_chirp.wav` | Sound effect played when a new sighting is added to the page. |
+| `Robin_PCB.png` | Main logo image, generated with ChatGPT. |
+| `Robin_PCB_Favicon.png` | Custom favicon for the website. |
 
-**Key files:**
-- `bird_nerd.py` - CLI tool for identifying birds from image files
-- `test_pictures/` - Sample images for testing
+---
 
 ## Quick Start
 
-Refer to `QUICKSTART.md` for detailed setup instructions, including hardware assembly, software installation, and configuration steps to get the Bird Nerd system up and running on a Raspberry Pi.
+See [`QUICKSTART.md`](QUICKSTART.md) for full setup instructions: includes camera setup, model download, and Firebase rules configuration.
 
-## Hardware Requirements
-- Raspberry Pi 4 (1GB+ RAM)
-- Raspberry Pi Camera Module (we're using X000VGJ8BL)
-- MicroSD card (16GB+ recommended)
-- A bird feeder. We bought [this bird feeder](https://www.tractorsupply.com/tsc/product/royal-wing-suet-combo-wooden-bird-feeder-with-galvanized-roof-2469759) from Tractor Supply Co. since it's relatively inexpensive 
-
-## Software Requirements
-- Python 3.13
-- TensorFlow Lite Runtime
-- Pip
-- OpenCV
-- NumPy
-- Firebase-admin
-- dotenv
-- tzlocal
-
-## Current Status
-✅ Motion detection working  
-✅ TFLite classification working  
-✅ Efficient operation on 1GB RAM Pi (~280MB usage)  
-✅ Database storage  
-🚧 Website integration (in progress)  
-🚧 Outdoor deployment (coming soon)
+---
 
 ## Acknowledgments
-Inspired by Mike Schultz's work on [TensorFlow Lite edge deployment](https://mikesml.com/2021/05/16/image-recognition-on-the-edge-tflite-on-raspberry-pi/)
+
+Inspired by Mike Schultz's work on [TensorFlow Lite edge deployment](https://mikesml.com/2021/05/16/image-recognition-on-the-edge-tflite-on-raspberry-pi/).
