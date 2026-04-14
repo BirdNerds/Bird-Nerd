@@ -116,3 +116,9 @@ See [`QUICKSTART.md`](QUICKSTART.md) for full setup instructions: includes camer
 ## Acknowledgments
 
 Inspired by Mike Schultz's work on [TensorFlow Lite edge deployment](https://mikesml.com/2021/05/16/image-recognition-on-the-edge-tflite-on-raspberry-pi/).
+
+I'd like to thank Professor Schuurman for his guidance and support throughout the entire project. There were many highs and lows. His wisdom, encouragement, and words of prayer kept me going when I wanted to give up. I am grateful for the opportunity to learn and grow through this project, and I hope it brings joy to bird lovers everywhere. 
+
+I thank the open-source community for providing the tools, libraries, and resources that made this project possible.
+
+I thank my friends and family for their encouragement and feedback.
