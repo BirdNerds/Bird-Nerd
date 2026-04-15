@@ -30,7 +30,7 @@ Calvin University, Fall 2025 – Spring 2026
 - **Live website**: [https://students.cs.calvin.edu/~jt42/](https://students.cs.calvin.edu/~jt42/)
 - **Source code**: [github.com/BirdNerds/Bird-Nerd](https://github.com/BirdNerds/Bird-Nerd)
 - **Project report**: [Google Docs](https://docs.google.com/document/d/1ejYF54ZocJHBa88cmade4xO01HcAqiNkbfw3FI-FXoc/edit?tab=t.aa46uj7emtqj)
-- **Presentation slides**: [Google Slides](https://docs.google.com/presentation/d/1DoOasrh5okXjUorbduDV5vdW57nHWcixiS5i9uhj74Q/edit?usp=sharing)
+- **Presentation slides**: [Google Slides](https://docs.google.com/presentation/d/1cY9yPQGm_GAju11Mens_Yrq24Pq3WZszPruLHl2gnp0/edit?usp=sharing)
 - **Calvin CS Department**: [calvin.edu/academics/school-stem/computer-science](https://calvin.edu/academics/school-stem/computer-science)
 
 ---
