@@ -32,6 +32,7 @@
       <!-- Right: About, Mute, Admin -->
       <div class="toolbar-right">
         <button class="toolbar-btn" id="about-btn" title="About Bird Nerd">About</button>
+        <button class="toolbar-btn" id="verses-btn" title="Scripture & Birds">Verses</button>
         <button class="toolbar-btn" id="mute-btn" title="Mute bird sounds">Bird sounds: ON</button>
         <button id="admin-login-btn" class="toolbar-btn">Log in</button>
         <div id="admin-status" class="admin-status" style="display: none;">
@@ -166,6 +167,42 @@
       </div>
     </div>
   </div>
+
+  <!-- =====================================================
+      VERSES MODAL
+      ===================================================== -->
+    <div id="verses-modal" class="modal" style="display: none;">
+      <div class="modal-content verses-modal-content">
+        <h2>Scripture & Birds</h2>
+        <p class="verses-intro">
+          One of the goals of Bird Nerd is to help people slow down and notice the world
+          around them. These verses have been a quiet backdrop to the whole project.
+          Click any card to read it on Bible Gateway.
+        </p>
+
+        <a class="verse-card" href="https://www.biblegateway.com/passage/?search=Matthew%206%3A26&version=NLT" target="_blank" rel="noopener">
+          <p class="verse-text jesus-words">"Look at the birds. They don't plant or harvest or store food in barns, for your heavenly Father feeds them. And aren't you far more valuable to him than they are?"</p>
+          <p class="verse-ref">Matthew 6:26 (NLT)</p>
+          <p class="verse-note">These are words of Jesus, and they land differently when you are literally watching birds. The same ones that visit this feeder are being cared for. It is hard not to feel something when you see that.</p>
+        </a>
+
+        <a class="verse-card" href="https://www.biblegateway.com/passage/?search=Psalm%20104%3A12&version=NIV" target="_blank" rel="noopener">
+          <p class="verse-text">"The birds of the sky nest by the waters; they sing among the branches."</p>
+          <p class="verse-ref">Psalm 104:12 (NIV)</p>
+          <p class="verse-note">A simple, peaceful image from a psalm about how God sustains creation. Birds nesting, singing, doing what they were made to do. That is exactly what shows up in this log every day.</p>
+        </a>
+
+        <a class="verse-card" href="https://www.biblegateway.com/passage/?search=Matthew%2010%3A29-31&version=NLT" target="_blank" rel="noopener">
+          <p class="verse-text jesus-words">"What is the price of two sparrows, one copper coin? But not a single sparrow can fall to the ground without your Father knowing it. And the very hairs on your head are all numbered. So don't be afraid; you are more valuable to God than a whole flock of sparrows."</p>
+          <p class="verse-ref">Matthew 10:29-31 (NLT)</p>
+          <p class="verse-note">More words of Jesus. Sparrows are some of the most common birds at feeders, easy to overlook. But not one of them goes unnoticed. There is something worth sitting with in that.</p>
+        </a>
+
+        <div class="modal-buttons" style="margin-top: 24px;">
+          <button type="button" id="close-verses" class="btn btn-primary">Close</button>
+        </div>
+      </div>
+    </div>
 
   <!-- =====================================================
        BIRD DETAIL MODAL
