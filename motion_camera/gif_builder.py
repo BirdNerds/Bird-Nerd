@@ -28,10 +28,9 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import imageio.v2 as imageio
+from PIL import Image
 
 import config
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -90,7 +89,7 @@ def build(
     gif_path   = os.path.join(config.GIFS_DIR, f"{stem}.gif")
     thumb_path = os.path.join(thumb_dir,        f"{stem}.jpg")
 
-    frame_duration_s = 1.0 / config.BURST_FPS   # imageio uses seconds, not ms
+    frame_duration_ms = int(1000 / config.BURST_FPS)
 
     # -------------------------------------------------------------------------
     # Thumbnail: sharpest frame (Laplacian variance), stays BGR for cv2.imwrite
@@ -115,30 +114,41 @@ def build(
         cv2.imwrite(thumb_path, best_frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
         del best_frame
 
-    # -------------------------------------------------------------------------
-    # GIF: collect RGB frames one at a time, write with imageio
-    #
-    # imageio.mimsave with format="GIF" uses a proper per-frame palette built
-    # from the RGB data as-is.  No PIL quantize(), no channel reordering.
-    # -------------------------------------------------------------------------
-    rgb_frames: list[np.ndarray] = []
-
+    ## -- GIF: use a fixed global palette to prevent channel reordering --------
+    frames_rgb = []
     for path in frame_paths:
         bgr = cv2.imread(path)
         if bgr is None:
             continue
-        rgb_frames.append(_bgr_to_rgb(bgr))
+        frames_rgb.append(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
         del bgr
 
-    if not rgb_frames:
+    if not frames_rgb:
         raise ValueError("No readable frames found - cannot build GIF.")
 
-    imageio.mimsave(
+    # Build palette from first frame, then convert ALL frames against it
+    # using that same palette - avoids per-frame palette reordering
+    first_pil = Image.fromarray(frames_rgb[0]).quantize(
+        colors=256, method=Image.Quantize.MEDIANCUT, dither=0
+    )
+    palette = first_pil.getpalette()
+
+    gif_frames = [first_pil]
+    for rgb in frames_rgb[1:]:
+        frame_pil = Image.fromarray(rgb).quantize(
+            colors=256, method=Image.Quantize.MEDIANCUT, dither=0
+        )
+        frame_pil.putpalette(palette)
+        gif_frames.append(frame_pil)
+
+    gif_frames[0].save(
         gif_path,
-        rgb_frames,
         format="GIF",
-        duration=frame_duration_s,
+        save_all=True,
+        append_images=gif_frames[1:],
+        duration=frame_duration_ms,
         loop=0,
+        optimize=False,
     )
 
     return gif_path, thumb_path
