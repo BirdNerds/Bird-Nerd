@@ -249,7 +249,7 @@ class BirdClassifier:
         winning_label = max(votes, key=votes.__getitem__)
 
         agreement = vote_counts[winning_label] / frame_count
-        if agreement < config.MIN_VOTE_FRACTION:
+        if agreement < config.MIN_VOTE_AGREEMENT:
             return None
 
         # Divide by votes for the winner only - not all classified frames

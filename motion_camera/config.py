@@ -75,7 +75,7 @@ IDLE_CHECK_INTERVAL = 0.4  # seconds
 # ---------------------------------------------------------------------------
 # Minimum confidence to log a sighting to images/ and Firebase.
 # Below this threshold the still goes to unclear_images/ and is NOT uploaded.
-CONFIDENCE_THRESHOLD = 0.85
+CONFIDENCE_THRESHOLD = 0.90
 
 # Run inference on every Nth frame during a burst to stay lightweight.
 # At 8 fps, classifying every 4th frame = ~2 inferences/sec, well within
@@ -84,12 +84,12 @@ CLASSIFY_EVERY_N_FRAMES = 4
 
 # Minimum number of frame votes needed before declaring a winner.
 # Prevents a single fluke frame from dictating the species.
-MIN_VOTES_REQUIRED = 3
-MIN_VOTE_FRACTION   = 0.50  # winning label must have at least this fraction of votes
+MIN_VOTES_REQUIRED = 4
+MIN_VOTE_AGREEMENT = 0.55  # winning label must have at least this fraction of votes
 
 # Pre-classification texture check: if the Laplacian variance of the crop
 # is below this value the image is too smooth to contain a bird - skip.
-LAP_VAR_THRESHOLD = 18.0
+LAP_VAR_THRESHOLD = 25.0
 
 # ---------------------------------------------------------------------------
 # Image preprocessing - CLAHE
