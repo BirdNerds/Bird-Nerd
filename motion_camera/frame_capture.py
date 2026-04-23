@@ -79,7 +79,7 @@ def grab_frame() -> np.ndarray:
     if _camera is None:
         raise RuntimeError("Camera not open - call open_camera() first.")
     rgb = _camera.capture_array("main")
-    return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+    return rgb
 
 
 def _clear_temp_dir() -> None:
@@ -131,11 +131,10 @@ def record_visit(stop_event: threading.Event) -> list[str]:
             loop_start = time.monotonic()
 
             rgb = _camera.capture_array("main")
-            bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
 
             # Write to disk immediately - do not accumulate in RAM
             path = os.path.join(_TEMP_DIR, f"frame_{frame_idx:04d}.jpg")
-            cv2.imwrite(path, bgr, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            cv2.imwrite(path, rgb, [cv2.IMWRITE_JPEG_QUALITY, 85])
             paths.append(path)
             frame_idx += 1
 
