@@ -8,6 +8,22 @@ then returns the list of file paths.  The caller (gif_builder.py) reads
 them back one at a time, so peak RAM usage is roughly one frame at a time
 rather than the entire burst.
 
+White balance strategy
+----------------------
+The camera shoots through a window, often at dawn/dusk, which confuses AWB
+into locking on a warm (orange/amber) cast.  The fix is a two-stage warmup:
+
+  Stage 1 (5 s)  - camera runs freely; AWB converges on the scene
+  Stage 2 (2 s)  - read back the ColourGains AWB settled on, then LOCK them
+
+Locking the gains before burst capture means every frame in a visit uses the
+same white balance, and the gains were chosen when the sensor was properly
+warmed up rather than on the very first frame.
+
+If ColourGains cannot be read (rare), we fall back to the Cloudy AWB preset,
+which is neutral enough for most outdoor/window scenes and avoids the warm
+Auto bias.
+
 Public API
 ----------
   open_camera()               -> None
@@ -33,13 +49,73 @@ _camera: Picamera2 | None = None
 _TEMP_DIR = "/tmp/bird_nerd_burst"
 
 
+def _lock_white_balance(camera: Picamera2) -> None:
+    """
+    Read the ColourGains that AWB settled on, then freeze them.
+
+    This prevents the orange/warm cast that appears when the camera is
+    shooting through a window at dawn or dusk.  AWB in Auto mode can
+    overcorrect for the warm ambient light and then lock that bad value
+    for the rest of the session.
+
+    Strategy:
+      1. Give AWB 5 s to converge (called before this function).
+      2. Read ColourGains from metadata.
+      3. Disable AWB and write those gains back, locking colour for the session.
+      4. If metadata read fails, fall back to Cloudy preset (neutral/cool bias).
+    """
+    try:
+        metadata = camera.capture_metadata()
+        colour_gains = metadata.get("ColourGains")
+
+        if colour_gains and len(colour_gains) == 2:
+            rg, bg = colour_gains
+
+            # Sanity-check the gains.  Valid gains are typically 1.0–4.0.
+            # An orange cast usually means rg >> bg (red boosted, blue crushed).
+            # If red gain is more than 2× the blue gain, AWB overcorrected -
+            # clamp red down and nudge blue up toward a neutral balance.
+            if rg > 2.0 * bg:
+                print(f"  AWB gains look warm (rg={rg:.2f}, bg={bg:.2f}) - clamping.")
+                rg = min(rg, bg * 1.8)   # pull red back toward neutral
+
+            print(f"  Locking white balance: red_gain={rg:.3f}, blue_gain={bg:.3f}")
+            camera.set_controls({
+                "AwbEnable":   False,
+                "ColourGains": (rg, bg),
+            })
+
+        else:
+            # Metadata read failed - fall back to a neutral preset.
+            # Cloudy (mode 3) has a slightly cool bias that counteracts the
+            # warm window cast better than Auto on problem scenes.
+            print("  ColourGains not available - falling back to Cloudy AWB preset.")
+            camera.set_controls({
+                "AwbEnable": True,
+                "AwbMode":   lc.AwbModeEnum.Cloudy,
+            })
+
+    except Exception as e:
+        print(f"  White balance lock failed ({e}) - AWB left in Auto mode.")
+
+
 def open_camera() -> None:
-    """Open and warm up the camera. Call once at startup."""
+    """
+    Open, configure, and warm up the camera.
+
+    Two-stage warmup:
+      Stage 1 (5 s): sensor and AWB converge freely.
+      Stage 2 (2 s): ColourGains locked, exposure stabilises.
+
+    Call once at startup.
+    """
     global _camera
     if _camera is not None:
         return
+
     os.makedirs(_TEMP_DIR, exist_ok=True)
     _camera = Picamera2()
+
     still_cfg = _camera.create_still_configuration(
         main={"size": (config.CAPTURE_WIDTH, config.CAPTURE_HEIGHT),
               "format": "RGB888"},
@@ -47,19 +123,18 @@ def open_camera() -> None:
     )
     _camera.configure(still_cfg)
     _camera.start()
+
+    # Stage 1: let AWB converge
+    print("  Camera warming up (stage 1/2 - AWB converging)...")
     time.sleep(5.0)
-    # _camera.set_controls({"AwbEnable": False, "AwbMode": 1})  # lock auto white balance after warmup
-    # Can also try:
-    #_camera.set_controls({"AwbMode": lc.AwbModeEnum.Daylight}) # Looking through a window, so daylight white balance is more consistent than auto
-    # Capture whatever gains AWB settled on, then lock them so color
-    # stays consistent across the whole session regardless of lighting changes
-    # metadata = _camera.capture_metadata()
-    # colour_gains = metadata.get("ColourGains")
-    # if colour_gains:
-    #     _camera.set_controls({
-    #         "AwbEnable": False,
-    #         "ColourGains": colour_gains
-    #     })  
+
+    # Stage 2: lock the gains AWB settled on
+    print("  Camera warming up (stage 2/2 - locking white balance)...")
+    _lock_white_balance(_camera)
+    time.sleep(2.0)
+
+    print("  Camera ready.")
+
 
 def close_camera() -> None:
     """Release the camera. Call on clean shutdown."""
@@ -98,6 +173,11 @@ def record_visit(stop_event: threading.Event) -> list[str]:
     elapses. Each frame is written to disk immediately as a JPEG so that
     RAM usage stays flat (one frame at a time) regardless of visit length.
 
+    White balance is NOT re-negotiated here - the gains locked in open_camera()
+    stay in effect for the entire session.  Switching to video config and back
+    preserves the locked ColourGains because we re-apply them after restoring
+    the still config.
+
     Returns a list of JPEG file paths in capture order.
     Peak RAM during capture: ~1 frame = 1280*960*3 bytes ~ 3.5 MB.
 
@@ -109,6 +189,14 @@ def record_visit(stop_event: threading.Event) -> list[str]:
     """
     if _camera is None:
         raise RuntimeError("Camera not open - call open_camera() first.")
+
+    # Remember the gains that are currently locked so we can re-apply them
+    # after the video config switch (switching config resets some controls).
+    try:
+        metadata     = _camera.capture_metadata()
+        locked_gains = metadata.get("ColourGains")
+    except Exception:
+        locked_gains = None
 
     _clear_temp_dir()
     paths: list[str] = []
@@ -124,6 +212,14 @@ def record_visit(stop_event: threading.Event) -> list[str]:
     )
     _camera.configure(video_cfg)
     _camera.start()
+
+    # Re-apply locked gains after config switch
+    if locked_gains and len(locked_gains) == 2:
+        _camera.set_controls({
+            "AwbEnable":   False,
+            "ColourGains": locked_gains,
+        })
+    time.sleep(0.3)   # let the new config settle before capture
 
     frame_idx = 0
     try:
@@ -154,6 +250,13 @@ def record_visit(stop_event: threading.Event) -> list[str]:
         )
         _camera.configure(still_cfg)
         _camera.start()
+
+        # Re-apply locked gains on the restored still config too
+        if locked_gains and len(locked_gains) == 2:
+            _camera.set_controls({
+                "AwbEnable":   False,
+                "ColourGains": locked_gains,
+            })
         time.sleep(0.5)
 
     return paths

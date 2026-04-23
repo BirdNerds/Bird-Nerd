@@ -197,6 +197,29 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================
+// VERSE MODAL
+// ============================================
+// Verses modal
+const versesBtn = document.getElementById('verses-btn');
+const versesModal = document.getElementById('verses-modal');
+const closeVerses = document.getElementById('close-verses');
+
+if (versesBtn) versesBtn.addEventListener('click', () => {
+    versesModal.style.display = 'flex';
+});
+if (closeVerses) closeVerses.addEventListener('click', () => {
+    versesModal.style.display = 'none';
+});
+versesModal?.addEventListener('click', (e) => {
+    if (e.target === versesModal) versesModal.style.display = 'none';
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && versesModal?.style.display === 'flex') {
+        versesModal.style.display = 'none';
+    }
+});
+
+// ============================================
 // PI HEARTBEAT INDICATOR
 // ============================================
 // main.py writes a heartbeat document to Firestore:
